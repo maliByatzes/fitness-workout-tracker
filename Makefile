@@ -1,4 +1,4 @@
-.PHONY: up reset stop start server
+.PHONY: up reset stop start server test
 
 up:
 	docker compose up -d
@@ -16,3 +16,6 @@ start:
 
 server:
 	go run cmd/fwt/main.go
+
+test:
+	go test ./...

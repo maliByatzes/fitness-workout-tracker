@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
@@ -28,6 +29,7 @@ func NewServer() *Server {
 		router: gin.Default(),
 	}
 
+	s.routes()
 	s.server.Handler = s.router
 
 	return &s
@@ -40,6 +42,12 @@ func (s *Server) Run(port string) error {
 	s.server.Addr = port
 	log.Printf("🚀 Server starting on port %s", port)
 	return s.server.ListenAndServe()
+}
+
+func (s *Server) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	return s.server.Shutdown(ctx)
 }
 
 func healthCheck() gin.HandlerFunc {
