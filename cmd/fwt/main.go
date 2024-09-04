@@ -21,8 +21,10 @@ func main() {
 	if err := db.Open(); err != nil {
 		log.Fatalf("cannot open database: %v", err)
 	}
+	defer db.Close()
 
 	srv := http.NewServer()
+	defer srv.Close()
 	log.Fatal(srv.Run(cfg.port))
 }
 
