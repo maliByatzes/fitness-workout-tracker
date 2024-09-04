@@ -10,20 +10,20 @@ type User struct {
 	Username       string    `json:"username,omitempty"`
 	Email          string    `json:"email,omitempty"`
 	HashedPassword string    `json:"-" db:"hashed_password"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Profile struct {
-	UserID      uint      `json:"userID"`
-	FirstName   string    `json:"firstName"`
-	LastName    string    `json:"lastName"`
+	UserID      uint      `json:"user_id"`
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
 	DateOfBirth time.Time `json:"dob"`
 	Gender      string    `json:"gender"`
 	Height      float64   `json:"height"`
 	Weight      float64   `json:"weight"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (u *User) Validate() error {

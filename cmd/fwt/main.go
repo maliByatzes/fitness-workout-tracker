@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/maliByatzes/fwt/http"
+	"github.com/maliByatzes/fwt/postgres"
 )
 
 type config struct {
@@ -15,6 +16,11 @@ type config struct {
 
 func main() {
 	cfg := envConfig()
+
+	db := postgres.NewDB(cfg.dbURL)
+	if err := db.Open(); err != nil {
+		log.Fatalf("cannot open database: %v", err)
+	}
 
 	srv := http.NewServer()
 	log.Fatal(srv.Run(cfg.port))
