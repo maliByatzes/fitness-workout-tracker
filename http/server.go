@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maliByatzes/fwt"
 )
 
 const TimeOut = 5 * time.Second
 
 type Server struct {
-	server *http.Server
-	router *gin.Engine
-	// services to used by various HTTP routes
-	// ...
+	server      *http.Server
+	router      *gin.Engine
+	userService fwt.UserService
 }
 
 func NewServer() *Server {

@@ -68,7 +68,6 @@ func MustOpenDB(tb testing.TB) *postgres.DB {
 
 	wd, _ := os.Getwd()
 	mgCmd := exec.Command("migrate", "-database", fmt.Sprintf(`%s`, dsn), "-path", wd+"/migrations", "up")
-	fmt.Println(mgCmd.String())
 	mgCmdOuput, err := mgCmd.CombinedOutput()
 	if err != nil {
 		tb.Fatalf("failed to run migrations: %v, output: %s", err, string(mgCmdOuput))
