@@ -13,7 +13,7 @@ import (
 )
 
 type DB struct {
-	db     *sqlx.DB
+	DB     *sqlx.DB
 	ctx    context.Context
 	cancel func()
 	DSN    string
@@ -34,12 +34,12 @@ func (db *DB) Open() (err error) {
 		return fmt.Errorf("dsn required.")
 	}
 
-	db.db, err = sqlx.Open("postgres", db.DSN)
+	db.DB, err = sqlx.Open("postgres", db.DSN)
 	if err != nil {
 		return err
 	}
 
-	if err = db.db.Ping(); err != nil {
+	if err = db.DB.Ping(); err != nil {
 		return err
 	}
 
@@ -50,14 +50,14 @@ func (db *DB) Open() (err error) {
 
 func (db *DB) Close() error {
 	db.cancel()
-	if db.db != nil {
-		return db.db.Close()
+	if db.DB != nil {
+		return db.DB.Close()
 	}
 	return nil
 }
 
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) *Tx {
-	tx := db.db.MustBeginTx(ctx, opts)
+	tx := db.DB.MustBeginTx(ctx, opts)
 	return &Tx{
 		Tx:  tx,
 		db:  db,
