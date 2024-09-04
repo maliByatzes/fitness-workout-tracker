@@ -52,7 +52,7 @@ func createUser(ctx context.Context, tx *Tx, user *fwt.User) error {
 	}
 
 	query := `
-	INSERT INTO user (username, email, hashed_password, created_at, updated_at)
+	INSERT INTO "user" (username, email, hashed_password, created_at, updated_at)
 	VALUES ($1, $2, $3, $4, $5) RETURNING id
 	`
 	args := []interface{}{user.Username, user.Email, user.HashedPassword, (*NullTime)(&user.CreatedAt), (*NullTime)(&user.UpdatedAt)}
