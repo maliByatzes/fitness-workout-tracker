@@ -10,8 +10,9 @@ import (
 )
 
 type config struct {
-	port  string
-	dbURL string
+	port      string
+	dbURL     string
+	jwtSecret string
 }
 
 func main() {
@@ -23,7 +24,10 @@ func main() {
 	}
 	defer db.Close()
 
-	srv := http.NewServer(db)
+	srv, err := http.NewServer(db, cfg.jwtSecret)
+	if err != nil {
+		log.Fatalf("cannot create new server: %v", err)
+	}
 	defer srv.Close()
 	log.Fatal(srv.Run(cfg.port))
 }
@@ -39,5 +43,10 @@ func envConfig() config {
 		panic("DATABASE_URL is not set!")
 	}
 
-	return config{port: port, dbURL: dbURL}
+	jwtSecret, ok := os.LookupEnv("JWT_SECRET")
+	if !ok {
+		panic("JWT_SECRET is not set!")
+	}
+
+	return config{port: port, dbURL: dbURL, jwtSecret: jwtSecret}
 }

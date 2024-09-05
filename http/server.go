@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/maliByatzes/fwt"
 	"github.com/maliByatzes/fwt/postgres"
+	"github.com/maliByatzes/fwt/token"
 )
 
 const TimeOut = 5 * time.Second
@@ -17,10 +18,11 @@ const TimeOut = 5 * time.Second
 type Server struct {
 	server      *http.Server
 	router      *gin.Engine
+	tokenMaker  token.Maker
 	userService fwt.UserService
 }
 
-func NewServer(db *postgres.DB) *Server {
+func NewServer(db *postgres.DB, secretKey string) (*Server, error) {
 	s := Server{
 		server: &http.Server{
 			WriteTimeout: TimeOut,
@@ -30,11 +32,17 @@ func NewServer(db *postgres.DB) *Server {
 		router: gin.Default(),
 	}
 
+	tkMaker, err := token.NewJWTMaker(secretKey)
+	if err != nil {
+		return nil, err
+	}
+	s.tokenMaker = tkMaker
+
 	s.routes()
 	s.userService = postgres.NewUserService(db)
 	s.server.Handler = s.router
 
-	return &s
+	return &s, nil
 }
 
 func (s *Server) Run(port string) error {
