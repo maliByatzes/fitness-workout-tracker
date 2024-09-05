@@ -77,11 +77,28 @@ func (n *NullTime) Scan(value interface{}) error {
 	if value == nil {
 		*(*time.Time)(n) = time.Time{}
 		return nil
-	} else if value, ok := value.(string); ok {
-		*(*time.Time)(n), _ = time.Parse(time.RFC3339, value)
-		return nil
 	}
-	return fmt.Errorf("NullTime: cannot scan time to time.Time: %T", value)
+
+	switch v := value.(type) {
+	case time.Time:
+		*(*time.Time)(n) = v
+	case []byte:
+		parsedTime, err := time.Parse(time.RFC3339, string(v))
+		if err != nil {
+			return err
+		}
+		*(*time.Time)(n) = parsedTime
+	case string:
+		parsedTime, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			return err
+		}
+		*(*time.Time)(n) = parsedTime
+	default:
+		return fmt.Errorf("NullTime: cannot scan type %T into NullTime", value)
+	}
+
+	return nil
 }
 
 func (n *NullTime) Value() (driver.Value, error) {

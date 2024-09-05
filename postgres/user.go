@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/maliByatzes/fwt"
 )
@@ -21,7 +23,10 @@ func (s *UserService) FindUserByID(ctx context.Context, id uint) (*fwt.User, err
 }
 
 func (s *UserService) FindUsers(ctx context.Context, filter fwt.UserFilter) ([]*fwt.User, int, error) {
-	return nil, 0, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	return findUsers(ctx, tx, filter)
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *fwt.User) error {
@@ -70,4 +75,73 @@ func createUser(ctx context.Context, tx *Tx, user *fwt.User) error {
 	}
 
 	return nil
+}
+
+func findUsers(ctx context.Context, tx *Tx, filter fwt.UserFilter) (_ []*fwt.User, n int, err error) {
+	where, args := []string{}, []interface{}{}
+	argPosition := 0
+
+	if v := filter.ID; v != nil {
+		argPosition++
+		where, args = append(where, fmt.Sprintf("id = $%d", argPosition)), append(args, *v)
+	}
+
+	if v := filter.Username; v != nil {
+		argPosition++
+		where, args = append(where, fmt.Sprintf("username = $%d", argPosition)), append(args, *v)
+	}
+
+	if v := filter.Email; v != nil {
+		argPosition++
+		where, args = append(where, fmt.Sprintf("email = $%d", argPosition)), append(args, *v)
+	}
+
+	query := `SELECT id, username, email, created_at, updated_at, COUNT(*) OVER() FROM "user"` + formatWhereClause(where) +
+		` ORDER BY id ASC` + formatLimitOffset(filter.Limit, filter.Offset)
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, n, err
+	}
+	defer rows.Close()
+
+	users := make([]*fwt.User, 0)
+	for rows.Next() {
+		var user fwt.User
+		if err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			(*NullTime)(&user.CreatedAt),
+			(*NullTime)(&user.UpdatedAt),
+			&n,
+		); err != nil {
+			return nil, n, err
+		}
+
+		users = append(users, &user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return users, n, nil
+}
+
+func formatLimitOffset(limit, offset int) string {
+	if limit > 0 && offset > 0 {
+		return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+	} else if limit > 0 {
+		return fmt.Sprintf("LIMIT %d", limit)
+	} else if offset > 0 {
+		return fmt.Sprintf("OFFSET %d", offset)
+	}
+	return ""
+}
+
+func formatWhereClause(where []string) string {
+	if len(where) == 0 {
+		return ""
+	}
+	return " WHERE " + strings.Join(where, " AND ")
 }

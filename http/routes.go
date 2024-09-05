@@ -7,5 +7,6 @@ func (s *Server) routes() {
 	{
 		apiRouter.GET("/healthchecker", healthCheck())
 		apiRouter.POST("/users/register", s.createUser())
+		// apiRouter.POST("/users/login", s.loginUser())
 	}
 }
