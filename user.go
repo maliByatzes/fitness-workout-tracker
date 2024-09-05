@@ -48,13 +48,13 @@ func (u *User) SetPassword(password string) error {
 	return nil
 }
 
-func (u *User) VerifyPassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(password))
-	return err == nil
+func (u *User) VerifyPassword(password string, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 type UserService interface {
 	FindUserByID(ctx context.Context, id uint) (*User, error)
+	Authenticate(ctx context.Context, username, password string) (*User, error)
 	FindUsers(ctx context.Context, filter UserFilter) ([]*User, int, error)
 	CreateUser(ctx context.Context, user *User) error
 	UpdateUser(ctx context.Context, id uint, upd UserUpdate) (*User, error)

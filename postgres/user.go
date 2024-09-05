@@ -39,7 +39,7 @@ func (s *UserService) Authenticate(ctx context.Context, username, password strin
 		return nil, err
 	}
 
-	if !user.VerifyPassword(password) {
+	if err := user.VerifyPassword(password, user.HashedPassword); err != nil {
 		return nil, &fwt.Error{Code: fwt.ENOTAUTHORIZED, Message: "Incorrect credentials"}
 	}
 
@@ -150,7 +150,7 @@ func findUsers(ctx context.Context, tx *Tx, filter fwt.UserFilter) (_ []*fwt.Use
 		where, args = append(where, fmt.Sprintf("email = $%d", argPosition)), append(args, *v)
 	}
 
-	query := `SELECT id, username, email, created_at, updated_at, COUNT(*) OVER() FROM "user"` + formatWhereClause(where) +
+	query := `SELECT id, username, email, hashed_password, created_at, updated_at, COUNT(*) OVER() FROM "user"` + formatWhereClause(where) +
 		` ORDER BY id ASC` + formatLimitOffset(filter.Limit, filter.Offset)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
@@ -166,6 +166,7 @@ func findUsers(ctx context.Context, tx *Tx, filter fwt.UserFilter) (_ []*fwt.Use
 			&user.ID,
 			&user.Username,
 			&user.Email,
+			&user.HashedPassword,
 			(*NullTime)(&user.CreatedAt),
 			(*NullTime)(&user.UpdatedAt),
 			&n,
