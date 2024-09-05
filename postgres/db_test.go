@@ -27,6 +27,7 @@ func TestDB(t *testing.T) {
 func MustOpenDB(tb testing.TB) *postgres.DB {
 	tb.Helper()
 
+	var err error
 	dockerCmd := exec.Command(
 		"docker",
 		"run",
@@ -42,13 +43,13 @@ func MustOpenDB(tb testing.TB) *postgres.DB {
 		fmt.Sprintf("POSTGRES_DB=%s", dbName),
 		"-d",
 		image)
-	if err := dockerCmd.Run(); err != nil {
-		tb.Fatalf("failed to start db container server: %v", err)
+	dockerCmdOutput, err := dockerCmd.CombinedOutput()
+	if err != nil {
+		tb.Fatalf("failed to start db container server: %v, output: %s", err, string(dockerCmdOutput))
 	}
 
 	dsn := fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", user, password, port, dbName)
 	db := postgres.NewDB(dsn)
-	var err error
 
 	for i := 0; i < 10; i++ {
 		err = db.Open()

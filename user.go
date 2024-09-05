@@ -3,6 +3,8 @@ package fwt
 import (
 	"context"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -34,6 +36,21 @@ func (u *User) Validate() error {
 		return Errorf(EINVALID, "Email is required.")
 	}
 	return nil
+}
+
+func (u *User) SetPassword(password string) error {
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	u.HashedPassword = string(hashBytes)
+	return nil
+}
+
+func (u *User) VerifyPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(password))
+	return err == nil
 }
 
 type UserService interface {

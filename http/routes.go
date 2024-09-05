@@ -6,5 +6,6 @@ func (s *Server) routes() {
 	apiRouter := s.router.Group("/api/v1")
 	{
 		apiRouter.GET("/healthchecker", healthCheck())
+		apiRouter.POST("/users/register", s.createUser())
 	}
 }

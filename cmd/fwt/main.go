@@ -23,7 +23,7 @@ func main() {
 	}
 	defer db.Close()
 
-	srv := http.NewServer()
+	srv := http.NewServer(db)
 	defer srv.Close()
 	log.Fatal(srv.Run(cfg.port))
 }

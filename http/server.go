@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maliByatzes/fwt"
+	"github.com/maliByatzes/fwt/postgres"
 )
 
 const TimeOut = 5 * time.Second
@@ -19,7 +20,7 @@ type Server struct {
 	userService fwt.UserService
 }
 
-func NewServer() *Server {
+func NewServer(db *postgres.DB) *Server {
 	s := Server{
 		server: &http.Server{
 			WriteTimeout: TimeOut,
@@ -30,6 +31,7 @@ func NewServer() *Server {
 	}
 
 	s.routes()
+	s.userService = postgres.NewUserService(db)
 	s.server.Handler = s.router
 
 	return &s
