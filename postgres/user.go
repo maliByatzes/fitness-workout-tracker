@@ -19,7 +19,31 @@ func NewUserService(db *DB) *UserService {
 }
 
 func (s *UserService) FindUserByID(ctx context.Context, id uint) (*fwt.User, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	user, err := findUserByID(ctx, tx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) Authenticate(ctx context.Context, username, password string) (*fwt.User, error) {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	user, err := findUserByUsername(ctx, tx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.VerifyPassword(password) {
+		return nil, &fwt.Error{Code: fwt.ENOTAUTHORIZED, Message: "Incorrect credentials"}
+	}
+
+	return user, nil
 }
 
 func (s *UserService) FindUsers(ctx context.Context, filter fwt.UserFilter) ([]*fwt.User, int, error) {
@@ -75,6 +99,36 @@ func createUser(ctx context.Context, tx *Tx, user *fwt.User) error {
 	}
 
 	return nil
+}
+
+func findUserByID(ctx context.Context, tx *Tx, id uint) (*fwt.User, error) {
+	a, _, err := findUsers(ctx, tx, fwt.UserFilter{ID: &id})
+	if err != nil {
+		return nil, err
+	} else if len(a) == 0 {
+		return nil, &fwt.Error{Code: fwt.ENOTFOUND, Message: "User not found."}
+	}
+	return a[0], nil
+}
+
+func findUserByUsername(ctx context.Context, tx *Tx, username string) (*fwt.User, error) {
+	a, _, err := findUsers(ctx, tx, fwt.UserFilter{Username: &username})
+	if err != nil {
+		return nil, err
+	} else if len(a) == 0 {
+		return nil, &fwt.Error{Code: fwt.ENOTFOUND, Message: "User not found."}
+	}
+	return a[0], nil
+}
+
+func findUserByEmail(ctx context.Context, tx *Tx, email string) (*fwt.User, error) {
+	a, _, err := findUsers(ctx, tx, fwt.UserFilter{Email: &email})
+	if err != nil {
+		return nil, err
+	} else if len(a) == 0 {
+		return nil, &fwt.Error{Code: fwt.ENOTFOUND, Message: "User not found."}
+	}
+	return a[0], nil
 }
 
 func findUsers(ctx context.Context, tx *Tx, filter fwt.UserFilter) (_ []*fwt.User, n int, err error) {
