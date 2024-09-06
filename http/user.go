@@ -116,6 +116,19 @@ func (s *Server) loginUser() gin.HandlerFunc {
 
 func (s *Server) logoutUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.SetCookie("access_token", "", -1, "/", "localhost", false, true)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "logged out successfully",
+		})
+	}
+}
 
+func (s *Server) getCurrentUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(*fwt.User)
+
+		c.JSON(http.StatusOK, gin.H{
+			"user": user,
+		})
 	}
 }
