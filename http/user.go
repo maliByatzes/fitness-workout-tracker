@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -77,7 +76,6 @@ func (s *Server) loginUser() gin.HandlerFunc {
 		}
 
 		user, err := s.userService.Authenticate(c, req.User.Username, req.User.Password)
-		fmt.Println(user)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid credentials",
@@ -113,5 +111,11 @@ func (s *Server) loginUser() gin.HandlerFunc {
 			"user":         user,
 			"access_token": accessToken,
 		})
+	}
+}
+
+func (s *Server) logoutUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
 	}
 }
