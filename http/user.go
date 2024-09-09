@@ -173,3 +173,23 @@ func (s *Server) updateUser() gin.HandlerFunc {
 		})
 	}
 }
+
+func (s *Server) deleteUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(*fwt.User)
+
+		err := s.userService.DeleteUser(c, user.ID)
+		if err != nil {
+			log.Printf("error in delete user handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+		}
+
+		c.SetCookie("access_token", "", -1, "/", "localhost", false, true)
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "user deleted successfully",
+		})
+	}
+}
