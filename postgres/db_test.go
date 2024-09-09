@@ -21,7 +21,7 @@ const (
 
 func TestDB(t *testing.T) {
 	db := MustOpenDB(t)
-	MustCloseBD(t, db)
+	MustCloseDB(t, db)
 }
 
 func MustOpenDB(tb testing.TB) *postgres.DB {
@@ -77,7 +77,7 @@ func MustOpenDB(tb testing.TB) *postgres.DB {
 	return db
 }
 
-func MustCloseBD(tb testing.TB, db *postgres.DB) {
+func MustCloseDB(tb testing.TB, db *postgres.DB) {
 	tb.Helper()
 
 	if err := db.Close(); err != nil {

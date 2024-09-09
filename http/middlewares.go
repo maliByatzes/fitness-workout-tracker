@@ -26,7 +26,7 @@ func (s *Server) authenticate() gin.HandlerFunc {
 			return
 		}
 
-		payload, err := s.tokenMaker.VerifyToken(accessToken)
+		payload, err := s.TokenMaker.VerifyToken(accessToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Sprintf("Unauthorized - %v", err),
@@ -35,7 +35,7 @@ func (s *Server) authenticate() gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.userService.FindUserByID(c, payload.ID)
+		user, err := s.UserService.FindUserByID(c, payload.ID)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Sprintf("Unauthorized - %v", err),

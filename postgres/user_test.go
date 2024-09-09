@@ -12,7 +12,7 @@ import (
 func TestUserService_CreateUser(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 
 		newUser := &fwt.User{
@@ -32,7 +32,7 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	t.Run("ErrUsernameRequired", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		err := s.CreateUser(context.Background(), &fwt.User{})
 		require.Error(t, err)
@@ -42,7 +42,7 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	t.Run("ErrEmailRequired", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		err := s.CreateUser(context.Background(), &fwt.User{Username: "jane"})
 		require.Error(t, err)
@@ -54,7 +54,7 @@ func TestUserService_CreateUser(t *testing.T) {
 func TestUserService_UpdateUser(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "janedoe",
@@ -78,7 +78,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 
 	t.Run("UpdateUsername", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "janedoe",
@@ -100,7 +100,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 
 	t.Run("UpdateEmail", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "janedoe",
@@ -122,7 +122,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 
 	t.Run("UpdateNothing", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "janedoe",
@@ -142,7 +142,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 func TestUserService_DeleteUser(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "jeff",
@@ -158,7 +158,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 func TestUserService_FindUsers(t *testing.T) {
 	t.Run("ID", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()
@@ -179,7 +179,7 @@ func TestUserService_FindUsers(t *testing.T) {
 
 	t.Run("Username", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()
@@ -200,7 +200,7 @@ func TestUserService_FindUsers(t *testing.T) {
 
 	t.Run("Email", func(t *testing.T) {
 		db := MustOpenDB(t)
-		defer MustCloseBD(t, db)
+		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()

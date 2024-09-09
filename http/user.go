@@ -32,7 +32,7 @@ func (s *Server) createUser() gin.HandlerFunc {
 		}
 		newUser.SetPassword(req.User.Password)
 
-		if err := s.userService.CreateUser(c, &newUser); err != nil {
+		if err := s.UserService.CreateUser(c, &newUser); err != nil {
 			if fwt.ErrorCode(err) == fwt.ECONFLICT {
 				c.JSON(http.StatusConflict, gin.H{
 					"error": fwt.ErrorMessage(err),
@@ -68,7 +68,7 @@ func (s *Server) loginUser() gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.userService.Authenticate(c, req.User.Username, req.User.Password)
+		user, err := s.UserService.Authenticate(c, req.User.Username, req.User.Password)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid credentials",
@@ -76,7 +76,7 @@ func (s *Server) loginUser() gin.HandlerFunc {
 			return
 		}
 
-		accessToken, accessPayload, err := s.tokenMaker.CreateToken(
+		accessToken, accessPayload, err := s.TokenMaker.CreateToken(
 			user.ID,
 			user.Username,
 			time.Hour*24,
@@ -152,7 +152,7 @@ func (s *Server) updateUser() gin.HandlerFunc {
 
 		user := c.MustGet("user").(*fwt.User)
 
-		newUser, err := s.userService.UpdateUser(c, user.ID, upd)
+		newUser, err := s.UserService.UpdateUser(c, user.ID, upd)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ECONFLICT {
 				c.JSON(http.StatusConflict, gin.H{
@@ -178,7 +178,7 @@ func (s *Server) deleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.MustGet("user").(*fwt.User)
 
-		err := s.userService.DeleteUser(c, user.ID)
+		err := s.UserService.DeleteUser(c, user.ID)
 		if err != nil {
 			log.Printf("error in delete user handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
