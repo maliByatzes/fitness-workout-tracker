@@ -79,7 +79,14 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, upd fwt.UserUpdat
 }
 
 func (s *UserService) DeleteUser(ctx context.Context, id uint) error {
-	return nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := deleteUser(ctx, tx, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func createUser(ctx context.Context, tx *Tx, user *fwt.User) error {
@@ -228,6 +235,21 @@ func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.
 	}
 
 	return user, nil
+}
+
+func deleteUser(ctx context.Context, tx *Tx, id uint) error {
+	if _, err := findUserByID(ctx, tx, id); err != nil {
+		return err
+	}
+
+	query := `
+	DELETE FROM "user" WHERE id = $1
+	`
+	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func formatLimitOffset(limit, offset int) string {

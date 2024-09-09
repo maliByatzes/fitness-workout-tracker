@@ -77,6 +77,22 @@ func TestUserService_UpdateUser(t *testing.T) {
 	})
 }
 
+func TestUserService_DeleteUser(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		db := MustOpenDB(t)
+		defer MustCloseBD(t, db)
+		s := postgres.NewUserService(db)
+		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+			Username:       "jeff",
+			Email:          "jeff@email.com",
+			HashedPassword: "password",
+		})
+
+		err := s.DeleteUser(context.Background(), user0.ID)
+		require.NoError(t, err)
+	})
+}
+
 func TestUserService_FindUsers(t *testing.T) {
 	t.Run("ID", func(t *testing.T) {
 		db := MustOpenDB(t)
