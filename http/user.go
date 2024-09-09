@@ -132,3 +132,7 @@ func (s *Server) getCurrentUser() gin.HandlerFunc {
 		})
 	}
 }
+
+func (s *Server) updateUser() gin.HandlerFunc {
+	return func(c *gin.Context) {}
+}

@@ -65,7 +65,17 @@ func (s *UserService) CreateUser(ctx context.Context, user *fwt.User) error {
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, id uint, upd fwt.UserUpdate) (*fwt.User, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	user, err := updateUser(ctx, tx, id, upd)
+	if err != nil {
+		return user, err
+	} else if err := tx.Commit(); err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func (s *UserService) DeleteUser(ctx context.Context, id uint) error {
@@ -181,6 +191,43 @@ func findUsers(ctx context.Context, tx *Tx, filter fwt.UserFilter) (_ []*fwt.Use
 	}
 
 	return users, n, nil
+}
+
+func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.User, error) {
+	user, err := findUserByID(ctx, tx, id)
+	if err != nil {
+		return user, err
+	}
+
+	if v := upd.Username; v != nil {
+		user.Username = *v
+	}
+
+	if v := upd.Email; v != nil {
+		user.Email = *v
+	}
+
+	user.UpdatedAt = tx.now
+
+	if err := user.Validate(); err != nil {
+		return user, err
+	}
+
+	args := []interface{}{
+		user.Username,
+		user.Email,
+		user.ID,
+	}
+	query := `
+	UPDATE "user" SET username = $1, email = $2
+	WHERE ID = $3
+	`
+
+	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func formatLimitOffset(limit, offset int) string {
