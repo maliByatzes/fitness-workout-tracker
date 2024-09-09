@@ -230,8 +230,16 @@ func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.
 	WHERE ID = $3
 	`
 
-	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
-		return user, err
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "user_username_key"`:
+			return user, fwt.Errorf(fwt.ECONFLICT, "This username already exists.")
+		case err.Error() == `pq: duplicate key value violates unique constraint "user_email_key"`:
+			return user, fwt.Errorf(fwt.ECONFLICT, "This email already exists.")
+		default:
+			return user, err
+		}
 	}
 
 	return user, nil

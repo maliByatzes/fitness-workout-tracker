@@ -33,24 +33,17 @@ func (s *Server) createUser() gin.HandlerFunc {
 		newUser.SetPassword(req.User.Password)
 
 		if err := s.userService.CreateUser(c, &newUser); err != nil {
-			switch {
-			case fwt.ErrorCode(err) == fwt.ECONFLICT && fwt.ErrorMessage(err) == "This username already exists.":
-				c.AbortWithStatusJSON(http.StatusConflict, gin.H{
+			if fwt.ErrorCode(err) == fwt.ECONFLICT {
+				c.JSON(http.StatusConflict, gin.H{
 					"error": fwt.ErrorMessage(err),
-				})
-				return
-			case fwt.ErrorCode(err) == fwt.ECONFLICT && fwt.ErrorMessage(err) == "This email already exists.":
-				c.AbortWithStatusJSON(http.StatusConflict, gin.H{
-					"error": fwt.ErrorMessage(err),
-				})
-				return
-			default:
-				log.Printf("Error in createUser: %v\n", err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error",
 				})
 				return
 			}
+			log.Printf("error in update user handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
@@ -136,8 +129,8 @@ func (s *Server) getCurrentUser() gin.HandlerFunc {
 func (s *Server) updateUser() gin.HandlerFunc {
 	var req struct {
 		User struct {
-			Username string `json:"username" binding:"min=3"`
-			Email    string `json:"password" binding:"email"`
+			Username string `json:"username"`
+			Email    string `json:"email"`
 		} `json:"user"`
 	}
 
@@ -149,15 +142,24 @@ func (s *Server) updateUser() gin.HandlerFunc {
 			return
 		}
 
-		user := c.MustGet("user").(*fwt.User)
-
-		upd := fwt.UserUpdate{
-			Username: &req.User.Username,
-			Email:    &req.User.Email,
+		upd := fwt.UserUpdate{}
+		if req.User.Username != "" {
+			upd.Username = &req.User.Username
 		}
+		if req.User.Email != "" {
+			upd.Email = &req.User.Email
+		}
+
+		user := c.MustGet("user").(*fwt.User)
 
 		newUser, err := s.userService.UpdateUser(c, user.ID, upd)
 		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ECONFLICT {
+				c.JSON(http.StatusConflict, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
 			log.Printf("error in update user handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",
