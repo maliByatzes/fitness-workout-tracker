@@ -134,5 +134,40 @@ func (s *Server) getCurrentUser() gin.HandlerFunc {
 }
 
 func (s *Server) updateUser() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+	var req struct {
+		User struct {
+			Username string `json:"username" binding:"min=3"`
+			Email    string `json:"password" binding:"email"`
+		} `json:"user"`
+	}
+
+	return func(c *gin.Context) {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		user := c.MustGet("user").(*fwt.User)
+
+		upd := fwt.UserUpdate{
+			Username: &req.User.Username,
+			Email:    &req.User.Email,
+		}
+
+		newUser, err := s.userService.UpdateUser(c, user.ID, upd)
+		if err != nil {
+			log.Printf("error in update user handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "user updated successfully",
+			"user":    newUser,
+		})
+	}
 }

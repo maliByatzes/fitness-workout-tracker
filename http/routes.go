@@ -13,6 +13,7 @@ func (s *Server) routes() {
 		apiRouter.Use(s.authenticate())
 		{
 			apiRouter.GET("/users/me", s.getCurrentUser())
+			apiRouter.PATCH("/users/update", s.updateUser())
 		}
 	}
 }
