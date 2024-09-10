@@ -17,6 +17,7 @@ func (s *Server) routes() {
 			apiRouter.DELETE("/users/delete", s.deleteUser())
 
 			apiRouter.POST("/profile/create", s.createProfile())
+			apiRouter.GET("/profile", s.getUserProfile())
 		}
 	}
 }

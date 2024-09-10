@@ -29,6 +29,18 @@ func (s *ProfileService) FindProfileByID(ctx context.Context, id uint) (*fwt.Pro
 	return profile, nil
 }
 
+func (s *ProfileService) FindProfileByUserID(ctx context.Context, userID uint) (*fwt.Profile, error) {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	profile, err := findProfileByUserID(ctx, tx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
 func (s *ProfileService) FindProfiles(ctx context.Context, filter fwt.ProfileFilter) ([]*fwt.Profile, int, error) {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()

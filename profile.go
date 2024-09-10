@@ -27,6 +27,7 @@ func (s *Profile) Validate() error {
 
 type ProfileService interface {
 	FindProfileByID(ctx context.Context, id uint) (*Profile, error)
+	FindProfileByUserID(ctx context.Context, userID uint) (*Profile, error)
 	FindProfiles(ctx context.Context, filter ProfileFilter) ([]*Profile, int, error)
 	CreateProfile(ctx context.Context, profile *Profile) error
 	UpdateProfile(ctx context.Context, id uint, upd ProfileUpdate) (*Profile, error)

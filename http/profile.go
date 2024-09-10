@@ -67,3 +67,27 @@ func (s *Server) createProfile() gin.HandlerFunc {
 		})
 	}
 }
+
+func (s *Server) getUserProfile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(*fwt.User)
+
+		profile, err := s.ProfileService.FindProfileByUserID(c, user.ID)
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+			log.Printf("error in get user profile handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"profile": profile,
+		})
+	}
+}
