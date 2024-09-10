@@ -18,6 +18,13 @@ type Profile struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+func (s *Profile) Validate() error {
+	if s.UserID == uint(0) {
+		return Errorf(EINVALID, "UserID is required.")
+	}
+	return nil
+}
+
 type ProfileService interface {
 	FindProfileByID(ctx context.Context, id uint) (*Profile, error)
 	FindDials(ctx context.Context, filter ProfileFilter) ([]*Profile, int, error)
