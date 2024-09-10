@@ -16,18 +16,6 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type Profile struct {
-	UserID      uint      `json:"user_id"`
-	FirstName   string    `json:"first_name"`
-	LastName    string    `json:"last_name"`
-	DateOfBirth time.Time `json:"dob"`
-	Gender      string    `json:"gender"`
-	Height      float64   `json:"height"`
-	Weight      float64   `json:"weight"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
 func (u *User) Validate() error {
 	if u.Username == "" {
 		return Errorf(EINVALID, "Username is required.")
