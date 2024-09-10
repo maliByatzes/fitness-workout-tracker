@@ -63,7 +63,13 @@ func createProfile(ctx context.Context, tx *Tx, profile *fwt.Profile) error {
 		return err
 	}
 
-	// TODO: Limit user to be create only one profile
+	exPr, err := findProfileByUserID(ctx, tx, profile.UserID)
+	if err != nil && fwt.ErrorCode(err) != fwt.ENOTFOUND && fwt.ErrorMessage(err) != "Profile not found." {
+		return err
+	}
+	if exPr != nil {
+		return &fwt.Error{Code: fwt.ECONFLICT, Message: "Profile already exists."}
+	}
 
 	query := `
 	INSERT INTO profile (user_id, first_name, last_name, date_of_birth, gender, height, weight, created_at, updated_at)
@@ -81,7 +87,7 @@ func createProfile(ctx context.Context, tx *Tx, profile *fwt.Profile) error {
 		(*NullTime)(&profile.UpdatedAt),
 	}
 
-	err := tx.QueryRowxContext(ctx, query, args...).Scan(&profile.ID)
+	err = tx.QueryRowxContext(ctx, query, args...).Scan(&profile.ID)
 	if err != nil {
 		return err
 	}

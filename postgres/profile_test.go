@@ -63,9 +63,6 @@ func TestProfileService_FindProfiles(t *testing.T) {
 		user := MustCreateUser(t, ctx, db, &fwt.User{Username: "kyle", Email: "kyle@email.com", HashedPassword: "password"})
 
 		MustCreateProfile(t, ctx, db, &fwt.Profile{UserID: user.ID, FirstName: "kyle1"})
-		MustCreateProfile(t, ctx, db, &fwt.Profile{UserID: user.ID, FirstName: "kyle2"})
-		MustCreateProfile(t, ctx, db, &fwt.Profile{UserID: user.ID, FirstName: "kyle3"})
-		MustCreateProfile(t, ctx, db, &fwt.Profile{UserID: user.ID, FirstName: "kyle4"})
 
 		id := uint(1)
 		a, n, err := s.FindProfiles(ctx, fwt.ProfileFilter{ID: &id})
