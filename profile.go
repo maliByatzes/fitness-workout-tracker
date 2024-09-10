@@ -27,7 +27,7 @@ func (s *Profile) Validate() error {
 
 type ProfileService interface {
 	FindProfileByID(ctx context.Context, id uint) (*Profile, error)
-	FindDials(ctx context.Context, filter ProfileFilter) ([]*Profile, int, error)
+	FindProfiles(ctx context.Context, filter ProfileFilter) ([]*Profile, int, error)
 	CreateProfile(ctx context.Context, profile *Profile) error
 	UpdateProfile(ctx context.Context, id uint, upd ProfileUpdate) (*Profile, error)
 	DeleteProfile(ctx context.Context, id uint) error
@@ -35,6 +35,7 @@ type ProfileService interface {
 
 type ProfileFilter struct {
 	ID          *uint      `json:"id"`
+	UserID      *uint      `json:"user_id"`
 	FirstName   *string    `json:"first_name"`
 	LastName    *string    `json:"last_name"`
 	DateOfBirth *time.Time `json:"dob"`

@@ -39,7 +39,7 @@ func (s *Server) createUser() gin.HandlerFunc {
 				})
 				return
 			}
-			log.Printf("error in update user handler: %v", err)
+			log.Printf("error in create user handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",
 			})

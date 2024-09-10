@@ -15,6 +15,8 @@ func (s *Server) routes() {
 			apiRouter.GET("/users/me", s.getCurrentUser())
 			apiRouter.PATCH("/users/update", s.updateUser())
 			apiRouter.DELETE("/users/delete", s.deleteUser())
+
+			apiRouter.POST("/profile/create", s.createProfile())
 		}
 	}
 }
