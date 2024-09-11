@@ -223,11 +223,12 @@ func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.
 	args := []interface{}{
 		user.Username,
 		user.Email,
+		user.UpdatedAt,
 		user.ID,
 	}
 	query := `
-	UPDATE "user" SET username = $1, email = $2
-	WHERE ID = $3
+	UPDATE "user" SET username = $1, email = $2, updated_at = $3
+	WHERE id = $4
 	`
 
 	_, err = tx.ExecContext(ctx, query, args...)

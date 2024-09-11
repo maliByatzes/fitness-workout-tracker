@@ -60,7 +60,17 @@ func (s *ProfileService) CreateProfile(ctx context.Context, profile *fwt.Profile
 }
 
 func (s *ProfileService) UpdateProfile(ctx context.Context, id uint, upd fwt.ProfileUpdate) (*fwt.Profile, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	profile, err := updateProfile(ctx, tx, id, upd)
+	if err != nil {
+		return profile, err
+	} else if err := tx.Commit(); err != nil {
+		return profile, err
+	}
+
+	return profile, nil
 }
 
 func (s *ProfileService) DeleteProfile(ctx context.Context, id uint) error {
@@ -200,4 +210,63 @@ func findProfiles(ctx context.Context, tx *Tx, filter fwt.ProfileFilter) (_ []*f
 	}
 
 	return profiles, n, nil
+}
+
+func updateProfile(ctx context.Context, tx *Tx, id uint, upd fwt.ProfileUpdate) (*fwt.Profile, error) {
+	profile, err := findProfileByID(ctx, tx, id)
+	if err != nil {
+		return profile, err
+	}
+
+	if v := upd.FirstName; v != nil {
+		profile.FirstName = *v
+	}
+
+	if v := upd.LastName; v != nil {
+		profile.LastName = *v
+	}
+
+	if v := upd.DateOfBirth; v != nil {
+		profile.DateOfBirth = *v
+	}
+
+	if v := upd.Gender; v != nil {
+		profile.Gender = *v
+	}
+
+	if v := upd.Height; v != nil {
+		profile.Height = *v
+	}
+
+	if v := upd.Weight; v != nil {
+		profile.Weight = *v
+	}
+
+	profile.UpdatedAt = tx.now
+
+	if err := profile.Validate(); err != nil {
+		return profile, err
+	}
+
+	args := []interface{}{
+		profile.FirstName,
+		profile.LastName,
+		profile.DateOfBirth,
+		profile.Gender,
+		profile.Height,
+		profile.Weight,
+		profile.UpdatedAt,
+		profile.ID,
+	}
+	query := `
+	UPDATE profile SET first_name = $1, last_name = $2, date_of_birth = $3, gender = $4, height = $5, weight = $6, updated_at = $7
+	WHERE id = $8
+	`
+
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return profile, err
+	}
+
+	return profile, nil
 }

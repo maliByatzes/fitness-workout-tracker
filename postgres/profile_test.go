@@ -74,9 +74,42 @@ func TestProfileService_FindProfiles(t *testing.T) {
 	})
 }
 
+func TestProfileService_UpdateProfile(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		db := MustOpenDB(t)
+		defer MustCloseDB(t, db)
+		s := postgres.NewProfileService(db)
+		ctx := context.Background()
+		user := MustCreateUser(t, ctx, db, &fwt.User{
+			Username:       "jeff",
+			Email:          "jeff@email.com",
+			HashedPassword: "password",
+		})
+		profile0 := MustCreateProfile(t, ctx, db, &fwt.Profile{
+			UserID:    user.ID,
+			FirstName: "jeffina",
+		})
+
+		newFirstName := "kyle"
+		up, err := s.UpdateProfile(ctx, profile0.ID, fwt.ProfileUpdate{
+			FirstName: &newFirstName,
+		})
+		require.NoError(t, err)
+		require.Equal(t, up.FirstName, newFirstName)
+
+		other, err := s.FindProfileByID(ctx, 1)
+		require.NoError(t, err)
+		require.Equal(t, up, other)
+	})
+}
+
 func MustCreateProfile(tb testing.TB, ctx context.Context, db *postgres.DB, profile *fwt.Profile) *fwt.Profile {
 	tb.Helper()
 	err := postgres.NewProfileService(db).CreateProfile(ctx, profile)
 	require.NoError(tb, err)
 	return profile
+}
+
+func strPtr(s string) *string {
+	return &s
 }
