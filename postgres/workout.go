@@ -36,12 +36,27 @@ func (s *WorkoutService) FindWorkouts(ctx context.Context, filter fwt.WorkoutFil
 	return findWorkouts(ctx, tx, filter)
 }
 
-func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout) error {
+func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout, exercises []string) error {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 
 	if err := createWorkout(ctx, tx, workout); err != nil {
 		return err
+	}
+
+	for _, exName := range exercises {
+		exercise, err := findExerciseByName(ctx, tx, exName)
+		if err != nil {
+			return err
+		}
+
+		if err := createWorkoutExercise(ctx, tx, &fwt.WorkoutExercise{
+			WorkoutID:  workout.ID,
+			ExerciseID: exercise.ID,
+			Order:      1, // Hard-code for now...
+		}); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()

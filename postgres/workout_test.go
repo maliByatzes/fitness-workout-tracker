@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// WARNING: tests are currently broken
+
 func TestWorkoutService_CreateWorkout(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		db := MustOpenDB(t)
@@ -29,7 +31,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout)
+		err := s.CreateWorkout(ctx, newWorkout, []string{})
 		require.NoError(t, err)
 
 		require.Equal(t, newWorkout.ID, uint(1))
@@ -48,7 +50,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout)
+		err := s.CreateWorkout(ctx, newWorkout, []string{})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "UserID is required.")
@@ -71,7 +73,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout)
+		err := s.CreateWorkout(ctx, newWorkout, []string{})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "Name is required.")
@@ -94,7 +96,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			Name:   postgres.RandomString(12),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout)
+		err := s.CreateWorkout(ctx, newWorkout, []string{})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "Scheduled Date is required.")
@@ -123,7 +125,7 @@ func TestWorkoutService_FindWorkouts(t *testing.T) {
 
 func MustCreateWorkout(tb testing.TB, ctx context.Context, db *postgres.DB, workout *fwt.Workout) *fwt.Workout {
 	tb.Helper()
-	err := postgres.NewWorkoutService(db).CreateWorkout(ctx, workout)
+	err := postgres.NewWorkoutService(db).CreateWorkout(ctx, workout, []string{})
 	require.NoError(tb, err)
 	return workout
 }

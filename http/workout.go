@@ -33,9 +33,16 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 			ScheduledDate: req.Workout.ScheduledDate,
 		}
 
-		if err := s.WorkoutService.CreateWorkout(c, &newWorkout); err != nil {
+		if err := s.WorkoutService.CreateWorkout(c, &newWorkout, req.Workout.Exercises); err != nil {
 			if fwt.ErrorCode(err) == fwt.EINVALID {
 				c.JSON(http.StatusBadRequest, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
 					"error": fwt.ErrorMessage(err),
 				})
 				return
@@ -46,42 +53,6 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 				"error": "Internal Server Error",
 			})
 			return
-		}
-
-		for _, exName := range req.Workout.Exercises {
-			exercise, err := s.ExerciseService.FindExerciseByName(c, exName)
-			if err != nil {
-				if fwt.ErrorCode(err) == fwt.ENOTFOUND {
-					c.JSON(http.StatusNotFound, gin.H{
-						"error": fwt.ErrorMessage(err),
-					})
-					return
-				}
-				log.Printf("error in create workout handler: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error",
-				})
-				return
-			}
-
-			if err := s.WorkoutExerciseService.CreateWorkoutExercise(c, &fwt.WorkoutExercise{
-				WorkoutID:  newWorkout.ID,
-				ExerciseID: exercise.ID,
-				Order:      1, // Hardcode of 1 for now...
-			}); err != nil {
-				if fwt.ErrorCode(err) == fwt.EINVALID {
-					c.JSON(http.StatusBadRequest, gin.H{
-						"error": fwt.ErrorMessage(err),
-					})
-					return
-				}
-
-				log.Printf("error in create workout handler: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error",
-				})
-				return
-			}
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
