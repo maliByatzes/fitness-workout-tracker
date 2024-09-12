@@ -74,7 +74,14 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, id uint, upd fwt.Pro
 }
 
 func (s *ProfileService) DeleteProfile(ctx context.Context, id uint) error {
-	return nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := deleteProfile(ctx, tx, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func createProfile(ctx context.Context, tx *Tx, profile *fwt.Profile) error {
@@ -269,4 +276,19 @@ func updateProfile(ctx context.Context, tx *Tx, id uint, upd fwt.ProfileUpdate) 
 	}
 
 	return profile, nil
+}
+
+func deleteProfile(ctx context.Context, tx *Tx, id uint) error {
+	if _, err := findProfileByID(ctx, tx, id); err != nil {
+		return err
+	}
+
+	query := `
+	DELETE FROM profile WHERE id = $1
+	`
+	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+		return err
+	}
+
+	return nil
 }

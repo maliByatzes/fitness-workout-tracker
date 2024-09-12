@@ -103,6 +103,31 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 	})
 }
 
+func TestProfileService_DeleteProfile(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+	s := postgres.NewProfileService(db)
+	ctx := context.Background()
+	user0 := MustCreateUser(t, ctx, db, &fwt.User{
+		Username:       "jeff",
+		Email:          "jeff@email.com",
+		HashedPassword: "password",
+	})
+	profile0 := MustCreateProfile(t, ctx, db, &fwt.Profile{
+		UserID:    user0.ID,
+		FirstName: "jeffina",
+		LastName:  "reboot",
+	})
+
+	err := s.DeleteProfile(ctx, profile0.ID)
+	require.NoError(t, err)
+
+	_, err = s.FindProfileByID(ctx, profile0.ID)
+	require.Error(t, err)
+	require.Equal(t, fwt.ErrorCode(err), fwt.ENOTFOUND)
+	require.Equal(t, fwt.ErrorMessage(err), "Profile not found.")
+}
+
 func MustCreateProfile(tb testing.TB, ctx context.Context, db *postgres.DB, profile *fwt.Profile) *fwt.Profile {
 	tb.Helper()
 	err := postgres.NewProfileService(db).CreateProfile(ctx, profile)
