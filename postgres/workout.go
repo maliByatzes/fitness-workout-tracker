@@ -25,7 +25,14 @@ func (s *WorkoutService) FindWorkouts(ctx context.Context, filter fwt.WorkoutFil
 }
 
 func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout) error {
-	return nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := createWorkout(ctx, tx, workout); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *WorkoutService) UpdateWorkout(ctx context.Context, id uint, upd fwt.WorkoutUpdate) (*fwt.Workout, error) {
@@ -33,5 +40,33 @@ func (s *WorkoutService) UpdateWorkout(ctx context.Context, id uint, upd fwt.Wor
 }
 
 func (s *WorkoutService) DeleteWorkout(ctx context.Context, id uint) error {
+	return nil
+}
+
+func createWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout) error {
+	workout.CreatedAt = tx.now
+	workout.UpdatedAt = workout.CreatedAt
+
+	if err := workout.Validate(); err != nil {
+		return err
+	}
+
+	query := `
+	INSERT INTO workout (user_id, name, scheduled_date, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5) RETURNING id
+	`
+	args := []interface{}{
+		workout.UserID,
+		workout.Name,
+		workout.ScheduledDate,
+		(*NullTime)(&workout.CreatedAt),
+		(*NullTime)(&workout.UpdatedAt),
+	}
+
+	err := tx.QueryRowxContext(ctx, query, args...).Scan(&workout.ID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

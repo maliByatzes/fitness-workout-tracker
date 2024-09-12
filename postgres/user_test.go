@@ -16,9 +16,9 @@ func TestUserService_CreateUser(t *testing.T) {
 		s := postgres.NewUserService(db)
 
 		newUser := &fwt.User{
-			Username:       "jane",
-			Email:          "jane@email.com",
-			HashedPassword: "hashed_password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		}
 
 		err := s.CreateUser(context.Background(), newUser)
@@ -44,7 +44,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		err := s.CreateUser(context.Background(), &fwt.User{Username: "jane"})
+		err := s.CreateUser(context.Background(), &fwt.User{Username: postgres.RandomUsername()})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "Email is required.")
@@ -57,12 +57,12 @@ func TestUserService_UpdateUser(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
-			Username:       "janedoe",
-			Email:          "janedoe@email.com",
-			HashedPassword: "password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
-		newUsername, newEmail := "jill", "jill@email.com"
+		newUsername, newEmail := postgres.RandomUsername(), postgres.RandomEmail()
 		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
 			Username: &newUsername,
 			Email:    &newEmail,
@@ -81,12 +81,12 @@ func TestUserService_UpdateUser(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
-			Username:       "janedoe",
-			Email:          "janedoe@email.com",
-			HashedPassword: "password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
-		newUsername := "jill"
+		newUsername := postgres.RandomUsername()
 		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
 			Username: &newUsername,
 		})
@@ -103,12 +103,12 @@ func TestUserService_UpdateUser(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
-			Username:       "janedoe",
-			Email:          "janedoe@email.com",
-			HashedPassword: "password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
-		newEmail := "jill@email.com"
+		newEmail := postgres.RandomEmail()
 		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
 			Email: &newEmail,
 		})
@@ -125,9 +125,9 @@ func TestUserService_UpdateUser(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
-			Username:       "janedoe",
-			Email:          "janedoe@email.com",
-			HashedPassword: "password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
 		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{})
@@ -145,9 +145,9 @@ func TestUserService_DeleteUser(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
 		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
-			Username:       "jeff",
-			Email:          "jeff@email.com",
-			HashedPassword: "password",
+			Username:       postgres.RandomUsername(),
+			Email:          postgres.RandomEmail(),
+			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
 		err := s.DeleteUser(context.Background(), user0.ID)
@@ -162,18 +162,19 @@ func TestUserService_FindUsers(t *testing.T) {
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "janedoe", Email: "janedoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "kyledoe", Email: "kyledoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "jimdoe", Email: "jimdoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "frankdoe", Email: "frankdoe@email.com", HashedPassword: "password"})
+		username, email := postgres.RandomUsername(), postgres.RandomEmail()
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: username, Email: email, HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
 
 		id := uint(2)
 		a, n, err := s.FindUsers(ctx, fwt.UserFilter{ID: &id})
 		require.NoError(t, err)
 		require.Equal(t, len(a), 1)
 		require.Equal(t, a[0].ID, uint(2))
-		require.Equal(t, a[0].Username, "kyledoe")
-		require.Equal(t, a[0].Email, "kyledoe@email.com")
+		require.Equal(t, a[0].Username, username)
+		require.Equal(t, a[0].Email, email)
 		require.Equal(t, n, 1)
 	})
 
@@ -183,18 +184,18 @@ func TestUserService_FindUsers(t *testing.T) {
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "janedoe", Email: "janedoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "kyledoe", Email: "kyledoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "jimdoe", Email: "jimdoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "frankdoe", Email: "frankdoe@email.com", HashedPassword: "password"})
+		username, email := postgres.RandomUsername(), postgres.RandomEmail()
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: username, Email: email, HashedPassword: postgres.RandomHashedPassword()})
 
-		username := "frankdoe"
 		a, n, err := s.FindUsers(ctx, fwt.UserFilter{Username: &username})
 		require.NoError(t, err)
 		require.Equal(t, len(a), 1)
 		require.Equal(t, a[0].ID, uint(4))
 		require.Equal(t, a[0].Username, username)
-		require.Equal(t, a[0].Email, "frankdoe@email.com")
+		require.Equal(t, a[0].Email, email)
 		require.Equal(t, n, 1)
 	})
 
@@ -204,17 +205,17 @@ func TestUserService_FindUsers(t *testing.T) {
 		s := postgres.NewUserService(db)
 
 		ctx := context.Background()
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "janedoe", Email: "janedoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "kyledoe", Email: "kyledoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "jimdoe", Email: "jimdoe@email.com", HashedPassword: "password"})
-		MustCreateUser(t, ctx, db, &fwt.User{Username: "frankdoe", Email: "frankdoe@email.com", HashedPassword: "password"})
+		username, email := postgres.RandomUsername(), postgres.RandomEmail()
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		MustCreateUser(t, ctx, db, &fwt.User{Username: username, Email: email, HashedPassword: postgres.RandomHashedPassword()})
 
-		email := "janedoe@email.com"
 		a, n, err := s.FindUsers(ctx, fwt.UserFilter{Email: &email})
 		require.NoError(t, err)
 		require.Equal(t, len(a), 1)
-		require.Equal(t, a[0].ID, uint(1))
-		require.Equal(t, a[0].Username, "janedoe")
+		require.Equal(t, a[0].ID, uint(4))
+		require.Equal(t, a[0].Username, username)
 		require.Equal(t, a[0].Email, email)
 		require.Equal(t, n, 1)
 	})
