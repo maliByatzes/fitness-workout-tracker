@@ -84,6 +84,7 @@ func (s *Server) getUserProfile() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",
 			})
+			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{

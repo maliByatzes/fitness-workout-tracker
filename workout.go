@@ -27,6 +27,10 @@ func (w *Workout) Validate() error {
 		return Errorf(EINVALID, "Scheduled Date is required.")
 	}
 
+	if !w.ScheduledDate.After(time.Now()) {
+		return Errorf(EINVALID, "Scheduled Date is invalid.")
+	}
+
 	return nil
 }
 

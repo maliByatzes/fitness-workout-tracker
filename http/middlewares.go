@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maliByatzes/fwt"
 )
 
 func (s *Server) authenticate() gin.HandlerFunc {
@@ -37,6 +38,13 @@ func (s *Server) authenticate() gin.HandlerFunc {
 
 		user, err := s.UserService.FindUserByID(c, payload.ID)
 		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				c.Abort()
+				return
+			}
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Sprintf("Unauthorized - %v", err),
 			})

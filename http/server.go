@@ -16,11 +16,14 @@ import (
 const TimeOut = 5 * time.Second
 
 type Server struct {
-	Server         *http.Server
-	Router         *gin.Engine
-	TokenMaker     token.Maker
-	UserService    fwt.UserService
-	ProfileService fwt.ProfileService
+	Server                 *http.Server
+	Router                 *gin.Engine
+	TokenMaker             token.Maker
+	UserService            fwt.UserService
+	ProfileService         fwt.ProfileService
+	WorkoutService         fwt.WorkoutService
+	ExerciseService        fwt.ExerciseService
+	WorkoutExerciseService fwt.WorkoutExerciseService
 }
 
 func NewServer(db *postgres.DB, secretKey string) (*Server, error) {
@@ -42,6 +45,9 @@ func NewServer(db *postgres.DB, secretKey string) (*Server, error) {
 	s.routes()
 	s.UserService = postgres.NewUserService(db)
 	s.ProfileService = postgres.NewProfileService(db)
+	s.WorkoutService = postgres.NewWorkoutService(db)
+	s.ExerciseService = postgres.NewExerciseService(db)
+	s.WorkoutExerciseService = postgres.NewWorkoutExerciseService(db)
 	s.Server.Handler = s.Router
 
 	return &s, nil
