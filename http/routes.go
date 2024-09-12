@@ -19,6 +19,7 @@ func (s *Server) routes() {
 			apiRouter.POST("/profile/create", s.createProfile())
 			apiRouter.GET("/profile", s.getUserProfile())
 			apiRouter.PATCH("/profile/update", s.updateProfile())
+			apiRouter.DELETE("/profile/delete", s.deleteProfile())
 		}
 	}
 }

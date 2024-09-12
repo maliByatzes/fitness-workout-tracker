@@ -163,3 +163,37 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 		})
 	}
 }
+
+func (s *Server) deleteProfile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("user").(*fwt.User)
+
+		profile, err := s.ProfileService.FindProfileByUserID(c, user.ID)
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND && fwt.ErrorMessage(err) == "Profile not found." {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+			log.Printf("error in update profile handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		err = s.ProfileService.DeleteProfile(c, profile.ID)
+		if err != nil {
+			log.Printf("error in update profile handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "profile deleted successfully",
+		})
+	}
+}
