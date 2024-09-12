@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS "exercise" (
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "exercise_pkey" PRIMARY KEY ("id")
 );
 
