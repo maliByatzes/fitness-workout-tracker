@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/maliByatzes/fwt"
 )
@@ -17,11 +18,22 @@ func NewWorkoutService(db *DB) *WorkoutService {
 }
 
 func (s *WorkoutService) FindWorkoutByID(ctx context.Context, id uint) (*fwt.Workout, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	workout, err := findWorkoutByID(ctx, tx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return workout, nil
 }
 
 func (s *WorkoutService) FindWorkouts(ctx context.Context, filter fwt.WorkoutFilter) ([]*fwt.Workout, int, error) {
-	return nil, 0, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	return findWorkouts(ctx, tx, filter)
 }
 
 func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout) error {
@@ -69,4 +81,70 @@ func createWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout) error {
 	}
 
 	return nil
+}
+
+func findWorkoutByID(ctx context.Context, tx *Tx, id uint) (*fwt.Workout, error) {
+	a, _, err := findWorkouts(ctx, tx, fwt.WorkoutFilter{ID: &id})
+	if err != nil {
+		return nil, err
+	} else if len(a) == 0 {
+		return nil, &fwt.Error{Code: fwt.ENOTFOUND, Message: "Workout not found."}
+	}
+
+	return a[0], nil
+}
+
+func findWorkouts(ctx context.Context, tx *Tx, filter fwt.WorkoutFilter) (_ []*fwt.Workout, n int, err error) {
+	where, args := []string{}, []interface{}{}
+	argPos := 0
+
+	if v := filter.ID; v != nil {
+		argPos++
+		where, args = append(where, fmt.Sprintf("id = $%d", argPos)), append(args, *v)
+	}
+	if v := filter.UserID; v != nil {
+		argPos++
+		where, args = append(where, fmt.Sprintf("user_id = $%d", argPos)), append(args, *v)
+	}
+	if v := filter.Name; v != nil {
+		argPos++
+		where, args = append(where, fmt.Sprintf("name = $%d", argPos)), append(args, *v)
+	}
+	if v := filter.ScheduledDate; v != nil {
+		argPos++
+		where, args = append(where, fmt.Sprintf("scheduled_date = $%d", argPos)), append(args, *v)
+	}
+
+	query := `
+	SELECT id, user_id, name, scheduled_date, created_at, updated_at, COUNT(*) OVER()
+	FROM workout` + formatWhereClause(where) + ` ORDER BY id ASC` + formatLimitOffset(filter.Limit, filter.Offset)
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, n, err
+	}
+	defer rows.Close()
+
+	workouts := make([]*fwt.Workout, 0)
+	for rows.Next() {
+		var workout fwt.Workout
+		if err := rows.Scan(
+			&workout.ID,
+			&workout.UserID,
+			&workout.Name,
+			&workout.ScheduledDate,
+			(*NullTime)(&workout.CreatedAt),
+			(*NullTime)(&workout.UpdatedAt),
+			&n,
+		); err != nil {
+			return nil, n, err
+		}
+
+		workouts = append(workouts, &workout)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return workouts, n, nil
 }

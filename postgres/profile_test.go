@@ -134,7 +134,3 @@ func MustCreateProfile(tb testing.TB, ctx context.Context, db *postgres.DB, prof
 	require.NoError(tb, err)
 	return profile
 }
-
-func strPtr(s string) *string {
-	return &s
-}

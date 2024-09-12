@@ -32,9 +32,8 @@ type ExerciseService interface {
 }
 
 type ExerciseFilter struct {
-	ID          *uint   `json:"id"`
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
+	ID   *uint   `json:"id"`
+	Name *string `json:"name"`
 
 	Offset int `json:"offset"`
 	Limit  int `json:"limit"`
