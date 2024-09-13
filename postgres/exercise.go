@@ -48,6 +48,44 @@ func (s *ExerciseService) FindExercises(ctx context.Context, filter fwt.Exercise
 	return findExercises(ctx, tx, filter)
 }
 
+func (s *ExerciseService) CreateExercise(ctx context.Context, exercise *fwt.Exercise) error {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := createExercise(ctx, tx, exercise); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func createExercise(ctx context.Context, tx *Tx, exercise *fwt.Exercise) error {
+	exercise.CreatedAt = tx.now
+	exercise.UpdatedAt = exercise.CreatedAt
+
+	if err := exercise.Validate(); err != nil {
+		return err
+	}
+
+	args := []interface{}{
+		exercise.Name,
+		exercise.Description,
+		(*NullTime)(&exercise.CreatedAt),
+		(*NullTime)(&exercise.UpdatedAt),
+	}
+	query := `
+	INSERT INTO exercise (name, description, created_at, updated_at)
+	VALUES ($1, $2, $3, $4) RETURNING id
+	`
+
+	err := tx.QueryRowxContext(ctx, query, args...).Scan(&exercise.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func findExerciseByID(ctx context.Context, tx *Tx, id uint) (*fwt.Exercise, error) {
 	a, _, err := findExercises(ctx, tx, fwt.ExerciseFilter{ID: &id})
 	if err != nil {

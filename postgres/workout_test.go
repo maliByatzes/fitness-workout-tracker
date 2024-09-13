@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// WARNING: tests are currently broken
-
 func TestWorkoutService_CreateWorkout(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		db := MustOpenDB(t)
@@ -31,7 +29,11 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout, []string{})
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+
+		err := s.CreateWorkout(ctx, newWorkout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
 		require.NoError(t, err)
 
 		require.Equal(t, newWorkout.ID, uint(1))
@@ -50,7 +52,11 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
 
-		err := s.CreateWorkout(ctx, newWorkout, []string{})
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+
+		err := s.CreateWorkout(ctx, newWorkout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "UserID is required.")
@@ -72,8 +78,11 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			UserID:        user.ID,
 			ScheduledDate: time.Now().Add(time.Hour),
 		}
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
 
-		err := s.CreateWorkout(ctx, newWorkout, []string{})
+		err := s.CreateWorkout(ctx, newWorkout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "Name is required.")
@@ -95,8 +104,11 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 			UserID: user.ID,
 			Name:   postgres.RandomString(12),
 		}
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
 
-		err := s.CreateWorkout(ctx, newWorkout, []string{})
+		err := s.CreateWorkout(ctx, newWorkout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
 		require.Error(t, err)
 		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
 		require.Equal(t, fwt.ErrorMessage(err), "Scheduled Date is required.")
@@ -125,7 +137,11 @@ func TestWorkoutService_FindWorkouts(t *testing.T) {
 
 func MustCreateWorkout(tb testing.TB, ctx context.Context, db *postgres.DB, workout *fwt.Workout) *fwt.Workout {
 	tb.Helper()
-	err := postgres.NewWorkoutService(db).CreateWorkout(ctx, workout, []string{})
+	exercise1 := MustCreateExercise(tb, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	exercise2 := MustCreateExercise(tb, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	exercise3 := MustCreateExercise(tb, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+
+	err := postgres.NewWorkoutService(db).CreateWorkout(ctx, workout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
 	require.NoError(tb, err)
 	return workout
 }

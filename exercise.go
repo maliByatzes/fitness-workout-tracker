@@ -29,6 +29,7 @@ type ExerciseService interface {
 	FindExerciseByID(context.Context, uint) (*Exercise, error)
 	FindExerciseByName(context.Context, string) (*Exercise, error)
 	FindExercises(context.Context, ExerciseFilter) ([]*Exercise, int, error)
+	CreateExercise(context.Context, *Exercise) error
 }
 
 type ExerciseFilter struct {
