@@ -36,6 +36,7 @@ func (w *Workout) Validate() error {
 
 type WorkoutService interface {
 	FindWorkoutByID(context.Context, uint) (*Workout, error)
+	FindWorkoutByIDUserID(context.Context, uint, uint) (*Workout, error)
 	FindWorkouts(context.Context, WorkoutFilter) ([]*Workout, int, error)
 	CreateWorkout(context.Context, *Workout, []string) error
 	UpdateWorkout(context.Context, uint, WorkoutUpdate) (*Workout, error)

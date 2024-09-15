@@ -22,6 +22,8 @@ func (s *Server) routes() {
 			apiRouter.DELETE("/profile/delete", s.deleteProfile())
 
 			apiRouter.POST("/workout/create", s.createWorkout())
+			apiRouter.GET("/workout/all", s.getAllWorkouts())
+			apiRouter.GET("/workout/:id", s.getOneWorkout())
 		}
 	}
 }

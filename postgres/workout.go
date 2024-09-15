@@ -29,6 +29,18 @@ func (s *WorkoutService) FindWorkoutByID(ctx context.Context, id uint) (*fwt.Wor
 	return workout, nil
 }
 
+func (s *WorkoutService) FindWorkoutByIDUserID(ctx context.Context, id uint, userID uint) (*fwt.Workout, error) {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	workout, err := findWorkoutByIDUserID(ctx, tx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return workout, nil
+}
+
 func (s *WorkoutService) FindWorkouts(ctx context.Context, filter fwt.WorkoutFilter) ([]*fwt.Workout, int, error) {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
@@ -100,6 +112,17 @@ func createWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout) error {
 
 func findWorkoutByID(ctx context.Context, tx *Tx, id uint) (*fwt.Workout, error) {
 	a, _, err := findWorkouts(ctx, tx, fwt.WorkoutFilter{ID: &id})
+	if err != nil {
+		return nil, err
+	} else if len(a) == 0 {
+		return nil, &fwt.Error{Code: fwt.ENOTFOUND, Message: "Workout not found."}
+	}
+
+	return a[0], nil
+}
+
+func findWorkoutByIDUserID(ctx context.Context, tx *Tx, id uint, userID uint) (*fwt.Workout, error) {
+	a, _, err := findWorkouts(ctx, tx, fwt.WorkoutFilter{ID: &id, UserID: &userID})
 	if err != nil {
 		return nil, err
 	} else if len(a) == 0 {
