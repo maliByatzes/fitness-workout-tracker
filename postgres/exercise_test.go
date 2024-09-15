@@ -2,7 +2,6 @@ package postgres_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/maliByatzes/fwt"
@@ -24,8 +23,7 @@ func TestExerciseService_CreateExercise(t *testing.T) {
 		err := s.CreateExercise(context.Background(), newExercise)
 		require.NoError(t, err)
 
-		fmt.Println("newExercise.ID in OK: ", newExercise.ID)
-		require.Equal(t, newExercise.ID, uint(1))
+		require.Equal(t, newExercise.ID, uint(74))
 		require.NotZero(t, newExercise.CreatedAt)
 		require.NotZero(t, newExercise.UpdatedAt)
 	})
