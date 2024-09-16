@@ -52,7 +52,9 @@ func (s *Server) authenticate() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", user)
+		ctx := fwt.NewContextWithUser(c.Request.Context(), user)
+		c.Request = c.Request.WithContext(ctx)
+
 		c.Next()
 	}
 }

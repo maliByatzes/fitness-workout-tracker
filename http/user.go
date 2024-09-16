@@ -32,7 +32,7 @@ func (s *Server) createUser() gin.HandlerFunc {
 		}
 		newUser.SetPassword(req.User.Password)
 
-		if err := s.UserService.CreateUser(c, &newUser); err != nil {
+		if err := s.UserService.CreateUser(c.Request.Context(), &newUser); err != nil {
 			if fwt.ErrorCode(err) == fwt.ECONFLICT {
 				c.JSON(http.StatusConflict, gin.H{
 					"error": fwt.ErrorMessage(err),
@@ -68,7 +68,7 @@ func (s *Server) loginUser() gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.UserService.Authenticate(c, req.User.Username, req.User.Password)
+		user, err := s.UserService.Authenticate(c.Request.Context(), req.User.Username, req.User.Password)
 		if err != nil || user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid credentials",
@@ -118,7 +118,13 @@ func (s *Server) logoutUser() gin.HandlerFunc {
 
 func (s *Server) getCurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"user": user,
@@ -150,9 +156,15 @@ func (s *Server) updateUser() gin.HandlerFunc {
 			upd.Email = &req.User.Email
 		}
 
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
-		newUser, err := s.UserService.UpdateUser(c, user.ID, upd)
+		newUser, err := s.UserService.UpdateUser(c.Request.Context(), user.ID, upd)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ECONFLICT {
 				c.JSON(http.StatusConflict, gin.H{
@@ -176,9 +188,15 @@ func (s *Server) updateUser() gin.HandlerFunc {
 
 func (s *Server) deleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
-		err := s.UserService.DeleteUser(c, user.ID)
+		err := s.UserService.DeleteUser(c.Request.Context(), user.ID)
 		if err != nil {
 			log.Printf("error in delete user handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{

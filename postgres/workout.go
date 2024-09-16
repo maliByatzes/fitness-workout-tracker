@@ -75,11 +75,28 @@ func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout
 }
 
 func (s *WorkoutService) UpdateWorkout(ctx context.Context, id uint, upd fwt.WorkoutUpdate) (*fwt.Workout, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	workout, err := updateWorkout(ctx, tx, id, upd)
+	if err != nil {
+		return workout, err
+	} else if err := tx.Commit(); err != nil {
+		return workout, err
+	}
+
+	return workout, nil
 }
 
 func (s *WorkoutService) DeleteWorkout(ctx context.Context, id uint) error {
-	return nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := deleteWorkout(ctx, tx, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func createWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout) error {
@@ -185,4 +202,57 @@ func findWorkouts(ctx context.Context, tx *Tx, filter fwt.WorkoutFilter) (_ []*f
 	}
 
 	return workouts, n, nil
+}
+
+func updateWorkout(ctx context.Context, tx *Tx, id uint, upd fwt.WorkoutUpdate) (*fwt.Workout, error) {
+	workout, err := findWorkoutByID(ctx, tx, id)
+	if err != nil {
+		return workout, err
+	}
+
+	if v := upd.Name; v != nil {
+		workout.Name = *v
+	}
+	if v := upd.ScheduledDate; v != nil {
+		workout.ScheduledDate = *v
+	}
+	workout.UpdatedAt = tx.now
+
+	if err := workout.Validate(); err != nil {
+		return workout, err
+	}
+
+	args := []interface{}{
+		workout.Name,
+		workout.ScheduledDate,
+		workout.UpdatedAt,
+		workout.ID,
+	}
+	query := `
+	UPDATE workout SET name = $1, scheduled_date = $2, updated_at = $3
+	WHERE id = $4
+	`
+
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return workout, err
+	}
+
+	return workout, nil
+}
+
+func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
+	if _, err := findWorkoutByID(ctx, tx, id); err != nil {
+		return err
+	}
+
+	query := `
+	DELETE FROM workout WHERE id = $1
+	`
+
+	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+		return err
+	}
+
+	return nil
 }
