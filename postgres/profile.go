@@ -85,6 +85,12 @@ func (s *ProfileService) DeleteProfile(ctx context.Context, id uint) error {
 }
 
 func createProfile(ctx context.Context, tx *Tx, profile *fwt.Profile) error {
+	userID := fwt.UserIDFromContext(ctx)
+	if userID == 0 {
+		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You must be logged in to create a profile.")
+	}
+	profile.ID = fwt.UserIDFromContext(ctx)
+
 	profile.CreatedAt = tx.now
 	profile.UpdatedAt = profile.CreatedAt
 

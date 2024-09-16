@@ -16,8 +16,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewWorkoutService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
@@ -67,8 +66,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewWorkoutService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
@@ -93,8 +91,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewWorkoutService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
@@ -121,8 +118,7 @@ func TestWorkoutService_FindWorkouts(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewWorkoutService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
 
 		MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(12), ScheduledDate: time.Now().Add(time.Hour)})
 

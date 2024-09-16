@@ -56,14 +56,14 @@ func TestUserService_UpdateUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+		user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
 		newUsername, newEmail := postgres.RandomUsername(), postgres.RandomEmail()
-		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
+		uu, err := s.UpdateUser(ctx0, user0.ID, fwt.UserUpdate{
 			Username: &newUsername,
 			Email:    &newEmail,
 		})
@@ -80,20 +80,20 @@ func TestUserService_UpdateUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+		user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
 		newUsername := postgres.RandomUsername()
-		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
+		uu, err := s.UpdateUser(ctx0, user0.ID, fwt.UserUpdate{
 			Username: &newUsername,
 		})
 		require.NoError(t, err)
 		require.Equal(t, uu.Username, newUsername)
 
-		other, err := s.FindUserByID(context.Background(), 1)
+		other, err := s.FindUserByID(ctx0, 1)
 		require.NoError(t, err)
 		require.Equal(t, uu, other)
 	})
@@ -102,20 +102,20 @@ func TestUserService_UpdateUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+		user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
 		newEmail := postgres.RandomEmail()
-		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{
+		uu, err := s.UpdateUser(ctx0, user0.ID, fwt.UserUpdate{
 			Email: &newEmail,
 		})
 		require.NoError(t, err)
 		require.Equal(t, uu.Email, newEmail)
 
-		other, err := s.FindUserByID(context.Background(), 1)
+		other, err := s.FindUserByID(ctx0, 1)
 		require.NoError(t, err)
 		require.Equal(t, uu, other)
 	})
@@ -124,16 +124,16 @@ func TestUserService_UpdateUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+		user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
-		uu, err := s.UpdateUser(context.Background(), user0.ID, fwt.UserUpdate{})
+		uu, err := s.UpdateUser(ctx0, user0.ID, fwt.UserUpdate{})
 		require.NoError(t, err)
 
-		other, err := s.FindUserByID(context.Background(), 1)
+		other, err := s.FindUserByID(ctx0, 1)
 		require.NoError(t, err)
 		require.Equal(t, uu, other)
 	})
@@ -144,13 +144,13 @@ func TestUserService_DeleteUser(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewUserService(db)
-		user0 := MustCreateUser(t, context.Background(), db, &fwt.User{
+		user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       postgres.RandomUsername(),
 			Email:          postgres.RandomEmail(),
 			HashedPassword: postgres.RandomHashedPassword(),
 		})
 
-		err := s.DeleteUser(context.Background(), user0.ID)
+		err := s.DeleteUser(ctx0, user0.ID)
 		require.NoError(t, err)
 	})
 }
@@ -221,9 +221,9 @@ func TestUserService_FindUsers(t *testing.T) {
 	})
 }
 
-func MustCreateUser(tb testing.TB, ctx context.Context, db *postgres.DB, user *fwt.User) *fwt.User {
+func MustCreateUser(tb testing.TB, ctx context.Context, db *postgres.DB, user *fwt.User) (*fwt.User, context.Context) {
 	tb.Helper()
 	err := postgres.NewUserService(db).CreateUser(ctx, user)
 	require.NoError(tb, err)
-	return user
+	return user, fwt.NewContextWithUser(ctx, user)
 }

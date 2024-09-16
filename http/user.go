@@ -172,6 +172,14 @@ func (s *Server) updateUser() gin.HandlerFunc {
 				})
 				return
 			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTAUTHORIZED {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
 			log.Printf("error in update user handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",

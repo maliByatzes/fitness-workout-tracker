@@ -204,6 +204,8 @@ func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.
 	user, err := findUserByID(ctx, tx, id)
 	if err != nil {
 		return user, err
+	} else if user.ID != fwt.UserIDFromContext(ctx) {
+		return nil, fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to update this user.")
 	}
 
 	if v := upd.Username; v != nil {
@@ -247,8 +249,10 @@ func updateUser(ctx context.Context, tx *Tx, id uint, upd fwt.UserUpdate) (*fwt.
 }
 
 func deleteUser(ctx context.Context, tx *Tx, id uint) error {
-	if _, err := findUserByID(ctx, tx, id); err != nil {
+	if user, err := findUserByID(ctx, tx, id); err != nil {
 		return err
+	} else if user.ID != fwt.UserIDFromContext(ctx) {
+		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to delete this user")
 	}
 
 	query := `

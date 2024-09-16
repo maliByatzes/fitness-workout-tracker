@@ -29,7 +29,14 @@ func (s *Server) createProfile() gin.HandlerFunc {
 			return
 		}
 
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
+
 		newProfile := fwt.Profile{
 			UserID:      user.ID,
 			FirstName:   req.Profile.FirstName,
@@ -40,7 +47,7 @@ func (s *Server) createProfile() gin.HandlerFunc {
 			Weight:      req.Profile.Weight,
 		}
 
-		if err := s.ProfileService.CreateProfile(c, &newProfile); err != nil {
+		if err := s.ProfileService.CreateProfile(c.Request.Context(), &newProfile); err != nil {
 			if fwt.ErrorCode(err) == fwt.EINVALID {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": fwt.ErrorMessage(err),
@@ -70,9 +77,15 @@ func (s *Server) createProfile() gin.HandlerFunc {
 
 func (s *Server) getUserProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
-		profile, err := s.ProfileService.FindProfileByUserID(c, user.ID)
+		profile, err := s.ProfileService.FindProfileByUserID(c.Request.Context(), user.ID)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
 				c.JSON(http.StatusNotFound, gin.H{
@@ -113,7 +126,14 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 			return
 		}
 
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
+
 		upd := fwt.ProfileUpdate{}
 		if req.Profile.FirstName != "" {
 			upd.FirstName = &req.Profile.FirstName
@@ -134,7 +154,7 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 			upd.Weight = &req.Profile.Weight
 		}
 
-		profile, err := s.ProfileService.FindProfileByUserID(c, user.ID)
+		profile, err := s.ProfileService.FindProfileByUserID(c.Request.Context(), user.ID)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ENOTFOUND && fwt.ErrorMessage(err) == "Profile not found." {
 				c.JSON(http.StatusNotFound, gin.H{
@@ -149,7 +169,7 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 			return
 		}
 
-		updatedProfile, err := s.ProfileService.UpdateProfile(c, profile.ID, upd)
+		updatedProfile, err := s.ProfileService.UpdateProfile(c.Request.Context(), profile.ID, upd)
 		if err != nil {
 			log.Printf("error in update profile handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -167,9 +187,15 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 
 func (s *Server) deleteProfile() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
-		profile, err := s.ProfileService.FindProfileByUserID(c, user.ID)
+		profile, err := s.ProfileService.FindProfileByUserID(c.Request.Context(), user.ID)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ENOTFOUND && fwt.ErrorMessage(err) == "Profile not found." {
 				c.JSON(http.StatusNotFound, gin.H{
@@ -184,7 +210,7 @@ func (s *Server) deleteProfile() gin.HandlerFunc {
 			return
 		}
 
-		err = s.ProfileService.DeleteProfile(c, profile.ID)
+		err = s.ProfileService.DeleteProfile(c.Request.Context(), profile.ID)
 		if err != nil {
 			log.Printf("error in update profile handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{

@@ -16,8 +16,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewProfileService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "jeff",
 			Email:          "jeff@email.com",
 			HashedPassword: "password",
@@ -48,8 +47,8 @@ func TestProfileService_CreateProfile(t *testing.T) {
 		s := postgres.NewProfileService(db)
 		err := s.CreateProfile(context.Background(), &fwt.Profile{})
 		require.Error(t, err)
-		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
-		require.Equal(t, fwt.ErrorMessage(err), "UserID is required.")
+		require.Equal(t, fwt.ErrorCode(err), fwt.ENOTAUTHORIZED)
+		require.Equal(t, fwt.ErrorMessage(err), "You must be logged in to create a profile.")
 	})
 }
 
@@ -59,8 +58,7 @@ func TestProfileService_FindProfiles(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewProfileService(db)
 
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{Username: "kyle", Email: "kyle@email.com", HashedPassword: "password"})
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: "kyle", Email: "kyle@email.com", HashedPassword: "password"})
 
 		MustCreateProfile(t, ctx, db, &fwt.Profile{UserID: user.ID, FirstName: "kyle1"})
 
@@ -79,8 +77,7 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)
 		s := postgres.NewProfileService(db)
-		ctx := context.Background()
-		user := MustCreateUser(t, ctx, db, &fwt.User{
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{
 			Username:       "jeff",
 			Email:          "jeff@email.com",
 			HashedPassword: "password",
@@ -107,22 +104,21 @@ func TestProfileService_DeleteProfile(t *testing.T) {
 	db := MustOpenDB(t)
 	defer MustCloseDB(t, db)
 	s := postgres.NewProfileService(db)
-	ctx := context.Background()
-	user0 := MustCreateUser(t, ctx, db, &fwt.User{
+	user0, ctx0 := MustCreateUser(t, context.Background(), db, &fwt.User{
 		Username:       "jeff",
 		Email:          "jeff@email.com",
 		HashedPassword: "password",
 	})
-	profile0 := MustCreateProfile(t, ctx, db, &fwt.Profile{
+	profile0 := MustCreateProfile(t, ctx0, db, &fwt.Profile{
 		UserID:    user0.ID,
 		FirstName: "jeffina",
 		LastName:  "reboot",
 	})
 
-	err := s.DeleteProfile(ctx, profile0.ID)
+	err := s.DeleteProfile(ctx0, profile0.ID)
 	require.NoError(t, err)
 
-	_, err = s.FindProfileByID(ctx, profile0.ID)
+	_, err = s.FindProfileByID(ctx0, profile0.ID)
 	require.Error(t, err)
 	require.Equal(t, fwt.ErrorCode(err), fwt.ENOTFOUND)
 	require.Equal(t, fwt.ErrorMessage(err), "Profile not found.")
