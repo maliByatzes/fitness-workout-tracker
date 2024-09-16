@@ -89,7 +89,7 @@ func createProfile(ctx context.Context, tx *Tx, profile *fwt.Profile) error {
 	if userID == 0 {
 		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You must be logged in to create a profile.")
 	}
-	profile.ID = fwt.UserIDFromContext(ctx)
+	profile.UserID = fwt.UserIDFromContext(ctx)
 
 	profile.CreatedAt = tx.now
 	profile.UpdatedAt = profile.CreatedAt
@@ -229,6 +229,8 @@ func updateProfile(ctx context.Context, tx *Tx, id uint, upd fwt.ProfileUpdate) 
 	profile, err := findProfileByID(ctx, tx, id)
 	if err != nil {
 		return profile, err
+	} else if profile.UserID != fwt.UserIDFromContext(ctx) {
+		return nil, fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to update this profile.")
 	}
 
 	if v := upd.FirstName; v != nil {

@@ -27,14 +27,21 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 			return
 		}
 
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
+
 		newWorkout := fwt.Workout{
 			UserID:        user.ID,
 			Name:          req.Workout.Name,
 			ScheduledDate: req.Workout.ScheduledDate,
 		}
 
-		if err := s.WorkoutService.CreateWorkout(c, &newWorkout, req.Workout.Exercises); err != nil {
+		if err := s.WorkoutService.CreateWorkout(c.Request.Context(), &newWorkout, req.Workout.Exercises); err != nil {
 			if fwt.ErrorCode(err) == fwt.EINVALID {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": fwt.ErrorMessage(err),
@@ -64,9 +71,15 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 
 func (s *Server) getAllWorkouts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
-		workouts, n, err := s.WorkoutService.FindWorkouts(c, fwt.WorkoutFilter{UserID: &user.ID})
+		workouts, n, err := s.WorkoutService.FindWorkouts(c.Request.Context(), fwt.WorkoutFilter{UserID: &user.ID})
 		if err != nil {
 			log.Printf("error in create workout handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -93,10 +106,16 @@ func (s *Server) getOneWorkout() gin.HandlerFunc {
 			return
 		}
 
-		user := c.MustGet("user").(*fwt.User)
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
 
 		workoutID2 := uint(workoutID)
-		workout, err := s.WorkoutService.FindWorkoutByIDUserID(c, workoutID2, user.ID)
+		workout, err := s.WorkoutService.FindWorkoutByIDUserID(c.Request.Context(), workoutID2, user.ID)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
 				c.JSON(http.StatusNotFound, gin.H{

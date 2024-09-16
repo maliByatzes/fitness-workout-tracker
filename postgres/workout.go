@@ -100,6 +100,12 @@ func (s *WorkoutService) DeleteWorkout(ctx context.Context, id uint) error {
 }
 
 func createWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout) error {
+	user := fwt.UserFromContext(ctx)
+	if user == nil {
+		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You must be logged to create workout")
+	}
+	workout.UserID = fwt.UserIDFromContext(ctx)
+
 	workout.CreatedAt = tx.now
 	workout.UpdatedAt = workout.CreatedAt
 
@@ -208,6 +214,8 @@ func updateWorkout(ctx context.Context, tx *Tx, id uint, upd fwt.WorkoutUpdate) 
 	workout, err := findWorkoutByID(ctx, tx, id)
 	if err != nil {
 		return workout, err
+	} else if workout.UserID != fwt.UserIDFromContext(ctx) {
+		return nil, fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to update this workout.")
 	}
 
 	if v := upd.Name; v != nil {
@@ -242,15 +250,22 @@ func updateWorkout(ctx context.Context, tx *Tx, id uint, upd fwt.WorkoutUpdate) 
 }
 
 func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
-	if _, err := findWorkoutByID(ctx, tx, id); err != nil {
+	workout, err := findWorkoutByID(ctx, tx, id)
+	if err != nil {
 		return err
+	} else if workout.UserID != fwt.UserIDFromContext(ctx) {
+		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to delete this workout.")
 	}
 
+	args := []interface{}{
+		workout.ID,
+		workout.UserID,
+	}
 	query := `
-	DELETE FROM workout WHERE id = $1
+	DELETE FROM workout WHERE id = $1, user_id = $2
 	`
 
-	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
 		return err
 	}
 
