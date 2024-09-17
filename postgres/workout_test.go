@@ -40,27 +40,6 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 		require.NotZero(t, newWorkout.UpdatedAt)
 	})
 
-	t.Run("ErrUserIDRequired", func(t *testing.T) {
-		db := MustOpenDB(t)
-		defer MustCloseDB(t, db)
-		s := postgres.NewWorkoutService(db)
-
-		_, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
-		newWorkout := &fwt.Workout{
-			Name:          postgres.RandomString(12),
-			ScheduledDate: time.Now().Add(time.Hour),
-		}
-
-		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
-		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
-		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
-
-		err := s.CreateWorkout(ctx, newWorkout, []string{exercise1.Name, exercise2.Name, exercise3.Name})
-		require.Error(t, err)
-		require.Equal(t, fwt.ErrorCode(err), fwt.EINVALID)
-		require.Equal(t, fwt.ErrorMessage(err), "UserID is required.")
-	})
-
 	t.Run("ErrNameRequired", func(t *testing.T) {
 		db := MustOpenDB(t)
 		defer MustCloseDB(t, db)

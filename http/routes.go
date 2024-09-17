@@ -24,6 +24,8 @@ func (s *Server) routes() {
 			apiRouter.POST("/workout/create", s.createWorkout())
 			apiRouter.GET("/workout/all", s.getAllWorkouts())
 			apiRouter.GET("/workout/:id", s.getOneWorkout())
+			apiRouter.PATCH("/workout/:id", s.updateWorkout())
+			apiRouter.DELETE("/workout/:id", s.deleteWorkout())
 		}
 	}
 }
