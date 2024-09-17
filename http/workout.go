@@ -35,13 +35,34 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 			return
 		}
 
+		exercises := make([]*fwt.Exercise, 0)
+		for _, exName := range req.Workout.Exercises {
+			exercise, err := s.ExerciseService.FindExerciseByName(c.Request.Context(), exName)
+			if err != nil {
+				if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+					c.JSON(http.StatusNotFound, gin.H{
+						"error": fwt.ErrorMessage(err),
+					})
+					return
+				}
+				log.Printf("error in create workout handler: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Internal Server Error",
+				})
+				return
+			}
+
+			exercises = append(exercises, exercise)
+		}
+
 		newWorkout := fwt.Workout{
 			UserID:        user.ID,
 			Name:          req.Workout.Name,
 			ScheduledDate: req.Workout.ScheduledDate,
+			Exercises:     exercises,
 		}
 
-		if err := s.WorkoutService.CreateWorkout(c.Request.Context(), &newWorkout, req.Workout.Exercises); err != nil {
+		if err := s.WorkoutService.CreateWorkout(c.Request.Context(), &newWorkout); err != nil {
 			if fwt.ErrorCode(err) == fwt.EINVALID {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": fwt.ErrorMessage(err),
@@ -81,7 +102,7 @@ func (s *Server) getAllWorkouts() gin.HandlerFunc {
 
 		workouts, n, err := s.WorkoutService.FindWorkouts(c.Request.Context(), fwt.WorkoutFilter{UserID: &user.ID})
 		if err != nil {
-			log.Printf("error in create workout handler: %v", err)
+			log.Printf("error in get all workouts workout handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",
 			})

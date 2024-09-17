@@ -67,7 +67,7 @@ func MustOpenDB(tb testing.TB) *postgres.DB {
 					break
 				}
 
-				time.Sleep(2 * time.Second)
+				time.Sleep(time.Second)
 			}
 			if err != nil {
 				tb.Fatalf("failed to connect to db: %v", err)
@@ -105,7 +105,7 @@ func MustOpenDB(tb testing.TB) *postgres.DB {
 			break
 		}
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Second)
 	}
 	if err != nil {
 		tb.Fatalf("failed to connect to db: %v", err)

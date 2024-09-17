@@ -70,10 +70,11 @@ func createWorkoutExercise(ctx context.Context, tx *Tx, workoutExercise *fwt.Wor
 		return err
 	}
 
-	workout, err := findWorkoutByID(ctx, tx, workoutExercise.WorkoutID)
-	if err != nil {
-		return err
-	}
+	/*
+		workout, err := findWorkoutByID(ctx, tx, workoutExercise.WorkoutID)
+		if err != nil {
+			return err
+			} */ // Hush-Hush
 
 	exercise, err := findExerciseByID(ctx, tx, workoutExercise.ExerciseID)
 	if err != nil {
@@ -85,7 +86,7 @@ func createWorkoutExercise(ctx context.Context, tx *Tx, workoutExercise *fwt.Wor
 	VALUES ($1, $2, $3, $4, $5) RETURNING id
 	`
 	args := []interface{}{
-		workout.ID,
+		workoutExercise.WorkoutID,
 		exercise.ID,
 		workoutExercise.Order,
 		(*NullTime)(&workoutExercise.CreatedAt),

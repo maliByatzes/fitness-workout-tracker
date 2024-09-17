@@ -48,7 +48,7 @@ func (s *WorkoutService) FindWorkouts(ctx context.Context, filter fwt.WorkoutFil
 	return findWorkouts(ctx, tx, filter)
 }
 
-func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout, exercises []string) error {
+func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout) error {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 
@@ -56,8 +56,8 @@ func (s *WorkoutService) CreateWorkout(ctx context.Context, workout *fwt.Workout
 		return err
 	}
 
-	for _, exName := range exercises {
-		exercise, err := findExerciseByName(ctx, tx, exName)
+	for _, ex := range workout.Exercises {
+		exercise, err := findExerciseByName(ctx, tx, ex.Name)
 		if err != nil {
 			return err
 		}
@@ -161,24 +161,26 @@ func findWorkouts(ctx context.Context, tx *Tx, filter fwt.WorkoutFilter) (_ []*f
 
 	if v := filter.ID; v != nil {
 		argPos++
-		where, args = append(where, fmt.Sprintf("id = $%d", argPos)), append(args, *v)
+		where, args = append(where, fmt.Sprintf("w.id = $%d", argPos)), append(args, *v)
 	}
 	if v := filter.UserID; v != nil {
 		argPos++
-		where, args = append(where, fmt.Sprintf("user_id = $%d", argPos)), append(args, *v)
+		where, args = append(where, fmt.Sprintf("w.user_id = $%d", argPos)), append(args, *v)
 	}
 	if v := filter.Name; v != nil {
 		argPos++
-		where, args = append(where, fmt.Sprintf("name = $%d", argPos)), append(args, *v)
+		where, args = append(where, fmt.Sprintf("w.name = $%d", argPos)), append(args, *v)
 	}
 	if v := filter.ScheduledDate; v != nil {
 		argPos++
-		where, args = append(where, fmt.Sprintf("scheduled_date = $%d", argPos)), append(args, *v)
+		where, args = append(where, fmt.Sprintf("w.scheduled_date = $%d", argPos)), append(args, *v)
 	}
 
 	query := `
-	SELECT id, user_id, name, scheduled_date, created_at, updated_at, COUNT(*) OVER()
-	FROM workout` + formatWhereClause(where) + ` ORDER BY id ASC` + formatLimitOffset(filter.Limit, filter.Offset)
+	SELECT w.id, w.user_id, w.name, w.scheduled_date, w.created_at, w.updated_at, e.id, e.name, e.description, e.created_at, e.updated_at, COUNT(*) OVER()
+	FROM workout AS w
+	INNER JOIN workout_exercise AS we ON we.workout_id = w.id
+	INNER JOIN exercise as e ON e.id = we.exercise_id` + formatWhereClause(where) + ` ORDER BY w.id ASC` + formatLimitOffset(filter.Limit, filter.Offset)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -189,6 +191,7 @@ func findWorkouts(ctx context.Context, tx *Tx, filter fwt.WorkoutFilter) (_ []*f
 	workouts := make([]*fwt.Workout, 0)
 	for rows.Next() {
 		var workout fwt.Workout
+		var exercise fwt.Exercise
 		if err := rows.Scan(
 			&workout.ID,
 			&workout.UserID,
@@ -196,12 +199,22 @@ func findWorkouts(ctx context.Context, tx *Tx, filter fwt.WorkoutFilter) (_ []*f
 			&workout.ScheduledDate,
 			(*NullTime)(&workout.CreatedAt),
 			(*NullTime)(&workout.UpdatedAt),
+			&exercise.ID,
+			&exercise.Name,
+			&exercise.Description,
+			(*NullTime)(&exercise.CreatedAt),
+			(*NullTime)(&exercise.UpdatedAt),
 			&n,
 		); err != nil {
 			return nil, n, err
 		}
 
-		workouts = append(workouts, &workout)
+		if index := implContains(workouts, &workout); index != -1 {
+			workouts[index].Exercises = append(workouts[index].Exercises, &exercise)
+		} else {
+			workout.Exercises = append(workout.Exercises, &exercise)
+			workouts = append(workouts, &workout)
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
@@ -283,4 +296,13 @@ func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
 	}
 
 	return nil
+}
+
+func implContains(ws []*fwt.Workout, w *fwt.Workout) int {
+	for index, value := range ws {
+		if value.ID == w.ID {
+			return index
+		}
+	}
+	return -1
 }

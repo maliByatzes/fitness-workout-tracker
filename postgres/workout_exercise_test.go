@@ -17,7 +17,10 @@ func TestWorkoutExerciseService_CreateWorkoutExercise(t *testing.T) {
 		s := postgres.NewWorkoutExerciseService(db)
 
 		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
-		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour)})
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour), Exercises: []*fwt.Exercise{exercise1, exercise2, exercise3}})
 		exercise := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
 
 		newWorkoutExercise := &fwt.WorkoutExercise{
@@ -58,7 +61,10 @@ func TestWorkoutExerciseService_CreateWorkoutExercise(t *testing.T) {
 		s := postgres.NewWorkoutExerciseService(db)
 
 		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
-		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour)})
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour), Exercises: []*fwt.Exercise{exercise1, exercise2, exercise3}})
 
 		newWorkoutExercise := &fwt.WorkoutExercise{
 			WorkoutID: workout.ID,
@@ -77,7 +83,10 @@ func TestWorkoutExerciseService_CreateWorkoutExercise(t *testing.T) {
 		s := postgres.NewWorkoutExerciseService(db)
 
 		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
-		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour)})
+		exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour), Exercises: []*fwt.Exercise{exercise1, exercise2, exercise3}})
 		exercise := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
 
 		newWorkoutExercise := &fwt.WorkoutExercise{
@@ -98,7 +107,10 @@ func TestWorkoutExerciseService_DeleteWorkoutExercise(t *testing.T) {
 	s := postgres.NewWorkoutExerciseService(db)
 
 	user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
-	workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(12), ScheduledDate: time.Now().Add(time.Hour)})
+	exercise1 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	exercise2 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	exercise3 := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(6), ScheduledDate: time.Now().Add(time.Hour), Exercises: []*fwt.Exercise{exercise1, exercise2, exercise3}})
 	exercise := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
 	we := MustCreateWorkoutExercise(t, context.Background(), db, &fwt.WorkoutExercise{
 		WorkoutID:  workout.ID,
