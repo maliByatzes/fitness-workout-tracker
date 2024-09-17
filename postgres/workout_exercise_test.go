@@ -91,3 +91,57 @@ func TestWorkoutExerciseService_CreateWorkoutExercise(t *testing.T) {
 		require.Equal(t, fwt.ErrorMessage(err), "Order is required.")
 	})
 }
+
+func TestWorkoutExerciseService_FindWorkoutExercises(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		db := MustOpenDB(t)
+		defer MustCloseDB(t, db)
+		s := postgres.NewWorkoutExerciseService(db)
+
+		user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+		workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(12), ScheduledDate: time.Now().Add(time.Hour)})
+		exercise := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+		MustCreateWorkoutExercise(t, context.Background(), db, &fwt.WorkoutExercise{
+			WorkoutID:  workout.ID,
+			ExerciseID: exercise.ID,
+			Order:      1,
+		})
+
+		id := uint(74)
+		a, n, err := s.FindWorkoutExercises(ctx, fwt.WorkoutExerciseFilter{ID: &id})
+		require.NoError(t, err)
+		require.Equal(t, len(a), 1)
+		require.Equal(t, a[0].ID, id)
+		require.Equal(t, n, 1)
+	})
+}
+
+func TestWorkoutExerciseService_DeleteWorkoutExercise(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+	s := postgres.NewWorkoutExerciseService(db)
+
+	user, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
+	workout := MustCreateWorkout(t, ctx, db, &fwt.Workout{UserID: user.ID, Name: postgres.RandomString(12), ScheduledDate: time.Now().Add(time.Hour)})
+	exercise := MustCreateExercise(t, ctx, db, &fwt.Exercise{Name: postgres.RandomString(12), Description: postgres.RandomString(50)})
+	we := MustCreateWorkoutExercise(t, context.Background(), db, &fwt.WorkoutExercise{
+		WorkoutID:  workout.ID,
+		ExerciseID: exercise.ID,
+		Order:      1,
+	})
+
+	err := s.DeleteWorkoutExercise(ctx, we.ID)
+	require.NoError(t, err)
+
+	_, err = s.FindWorkoutExerciseByID(ctx, we.ID)
+	require.Error(t, err)
+	require.Equal(t, fwt.ErrorCode(err), fwt.ENOTFOUND)
+	require.Equal(t, fwt.ErrorMessage(err), "Workout Exercise not found.")
+}
+
+func MustCreateWorkoutExercise(tb testing.TB, ctx context.Context, db *postgres.DB, we *fwt.WorkoutExercise) *fwt.WorkoutExercise {
+	tb.Helper()
+	err := postgres.NewWorkoutExerciseService(db).CreateWorkoutExercise(ctx, we)
+	require.NoError(tb, err)
+	return we
+}

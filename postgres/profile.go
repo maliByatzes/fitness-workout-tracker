@@ -272,10 +272,11 @@ func updateProfile(ctx context.Context, tx *Tx, id uint, upd fwt.ProfileUpdate) 
 		profile.Weight,
 		profile.UpdatedAt,
 		profile.ID,
+		profile.UserID,
 	}
 	query := `
 	UPDATE profile SET first_name = $1, last_name = $2, date_of_birth = $3, gender = $4, height = $5, weight = $6, updated_at = $7
-	WHERE id = $8
+	WHERE id = $8 AND user_id = $9
 	`
 
 	_, err = tx.ExecContext(ctx, query, args...)
@@ -287,14 +288,21 @@ func updateProfile(ctx context.Context, tx *Tx, id uint, upd fwt.ProfileUpdate) 
 }
 
 func deleteProfile(ctx context.Context, tx *Tx, id uint) error {
-	if _, err := findProfileByID(ctx, tx, id); err != nil {
+	profile, err := findProfileByID(ctx, tx, id)
+	if err != nil {
 		return err
+	} else if profile.UserID != fwt.UserIDFromContext(ctx) {
+		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to delete this profile.")
 	}
 
+	args := []interface{}{
+		profile.ID,
+		profile.UserID,
+	}
 	query := `
-	DELETE FROM profile WHERE id = $1
+	DELETE FROM profile WHERE id = $1 AND user_id = $2
 	`
-	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
 		return err
 	}
 

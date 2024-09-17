@@ -171,6 +171,12 @@ func (s *Server) updateProfile() gin.HandlerFunc {
 
 		updatedProfile, err := s.ProfileService.UpdateProfile(c.Request.Context(), profile.ID, upd)
 		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTAUTHORIZED {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
 			log.Printf("error in update profile handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",
@@ -212,6 +218,13 @@ func (s *Server) deleteProfile() gin.HandlerFunc {
 
 		err = s.ProfileService.DeleteProfile(c.Request.Context(), profile.ID)
 		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTAUTHORIZED {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
 			log.Printf("error in update profile handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",

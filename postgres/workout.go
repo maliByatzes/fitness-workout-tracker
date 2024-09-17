@@ -235,10 +235,11 @@ func updateWorkout(ctx context.Context, tx *Tx, id uint, upd fwt.WorkoutUpdate) 
 		workout.ScheduledDate,
 		workout.UpdatedAt,
 		workout.ID,
+		workout.UserID,
 	}
 	query := `
 	UPDATE workout SET name = $1, scheduled_date = $2, updated_at = $3
-	WHERE id = $4
+	WHERE id = $4 AND user_id = $5
 	`
 
 	_, err = tx.ExecContext(ctx, query, args...)
@@ -257,12 +258,24 @@ func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
 		return fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to delete this workout.")
 	}
 
+	workoutExercises, _, err := findWorkoutExercises(ctx, tx, fwt.WorkoutExerciseFilter{WorkoutID: &workout.ID})
+	if err != nil {
+		return err
+	}
+
+	for _, we := range workoutExercises {
+		err := deleteWorkoutExercise(ctx, tx, we.ID)
+		if err != nil {
+			return err
+		}
+	}
+
 	args := []interface{}{
 		workout.ID,
 		workout.UserID,
 	}
 	query := `
-	DELETE FROM workout WHERE id = $1, user_id = $2
+	DELETE FROM workout WHERE id = $1 AND user_id = $2
 	`
 
 	if _, err := tx.ExecContext(ctx, query, args...); err != nil {

@@ -45,7 +45,7 @@ func TestWorkoutService_CreateWorkout(t *testing.T) {
 		defer MustCloseDB(t, db)
 		s := postgres.NewWorkoutService(db)
 
-		ctx := context.Background()
+		_, ctx := MustCreateUser(t, context.Background(), db, &fwt.User{Username: postgres.RandomUsername(), Email: postgres.RandomEmail(), HashedPassword: postgres.RandomHashedPassword()})
 		newWorkout := &fwt.Workout{
 			Name:          postgres.RandomString(12),
 			ScheduledDate: time.Now().Add(time.Hour),
