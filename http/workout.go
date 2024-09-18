@@ -221,6 +221,57 @@ func (s *Server) updateWorkout() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) removeExercisesFromWorkout() gin.HandlerFunc {
+	var req struct {
+		Exercises []string `json:"exercises"`
+	}
+
+	return func(c *gin.Context) {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		workoutIDstr := c.Param("id")
+		workoutID, err := strconv.ParseUint(workoutIDstr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid workout id param",
+			})
+			return
+		}
+
+		workout, err := s.WorkoutService.RemoveExercisesFromWorkout(c.Request.Context(), uint(workoutID), req.Exercises)
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTAUTHORIZED {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			log.Printf("error in remove exercises from workout handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"workout": workout,
+		})
+	}
+}
+
 func (s *Server) deleteWorkout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		workoutIDstr := c.Param("id")

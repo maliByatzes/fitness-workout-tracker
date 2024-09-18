@@ -45,6 +45,7 @@ type WorkoutService interface {
 	FindWorkouts(context.Context, WorkoutFilter) ([]*Workout, int, error)
 	CreateWorkout(context.Context, *Workout) error
 	UpdateWorkout(context.Context, uint, WorkoutUpdate) (*Workout, error)
+	RemoveExercisesFromWorkout(context.Context, uint, []string) (*Workout, error)
 	DeleteWorkout(context.Context, uint) error
 }
 

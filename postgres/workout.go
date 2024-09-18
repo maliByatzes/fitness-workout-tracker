@@ -88,6 +88,33 @@ func (s *WorkoutService) UpdateWorkout(ctx context.Context, id uint, upd fwt.Wor
 	return workout, nil
 }
 
+func (s *WorkoutService) RemoveExercisesFromWorkout(ctx context.Context, id uint, exercises []string) (*fwt.Workout, error) {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	workout, err := findWorkoutByID(ctx, tx, id)
+	if err != nil {
+		return nil, err
+	} else if workout.UserID != fwt.UserIDFromContext(ctx) {
+		return nil, fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to modify this workout.")
+	}
+
+	for _, exName := range exercises {
+		for index, e := range workout.Exercises {
+			if e.Name == exName {
+				err := removeExerciseFromWorkout(ctx, tx, workout, e)
+				if err != nil {
+					return nil, err
+				}
+
+				workout.Exercises = append(workout.Exercises[:index], workout.Exercises[index+1:]...)
+			}
+		}
+	}
+
+	return workout, nil
+}
+
 func (s *WorkoutService) DeleteWorkout(ctx context.Context, id uint) error {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
@@ -261,6 +288,22 @@ func updateWorkout(ctx context.Context, tx *Tx, id uint, upd fwt.WorkoutUpdate) 
 	}
 
 	return workout, nil
+}
+
+func removeExerciseFromWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout, exercise *fwt.Exercise) error {
+	a, _, err := findWorkoutExercises(ctx, tx, fwt.WorkoutExerciseFilter{WorkoutID: &workout.ID, ExerciseID: &exercise.ID})
+	if err != nil {
+		return err
+	} else if len(a) == 0 {
+		return fwt.Errorf(fwt.ENOTFOUND, "Workout_Exercise not found.")
+	}
+
+	err = deleteWorkoutExercise(ctx, tx, a[0].ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
