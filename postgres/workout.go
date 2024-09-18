@@ -104,12 +104,16 @@ func (s *WorkoutService) RemoveExercisesFromWorkout(ctx context.Context, id uint
 			if e.Name == exName {
 				err := removeExerciseFromWorkout(ctx, tx, workout, e)
 				if err != nil {
-					return nil, err
+					return workout, err
 				}
 
 				workout.Exercises = append(workout.Exercises[:index], workout.Exercises[index+1:]...)
 			}
 		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return workout, err
 	}
 
 	return workout, nil
