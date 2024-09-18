@@ -243,7 +243,28 @@ func (s *Server) removeExercisesFromWorkout() gin.HandlerFunc {
 			return
 		}
 
-		workout, err := s.WorkoutService.RemoveExercisesFromWorkout(c.Request.Context(), uint(workoutID), req.Exercises)
+		w, err := s.WorkoutService.FindWorkoutByID(c.Request.Context(), uint(workoutID))
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+			log.Printf("error in remove exercises from workout handler: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+		if len(req.Exercises) >= len(w.Exercises) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "There must be at least one exercise remaining in the workout.",
+			})
+			return
+		}
+
+		workout, err := s.WorkoutService.RemoveExercisesFromWorkout(c.Request.Context(), w.ID, req.Exercises)
 		if err != nil {
 			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
 				c.JSON(http.StatusNotFound, gin.H{
