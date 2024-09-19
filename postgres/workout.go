@@ -119,6 +119,40 @@ func (s *WorkoutService) RemoveExercisesFromWorkout(ctx context.Context, id uint
 	return workout, nil
 }
 
+func (s *WorkoutService) AddExercisesToWorkout(ctx context.Context, id uint, exercises []string) (*fwt.Workout, error) {
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	workout, err := findWorkoutByID(ctx, tx, id)
+	if err != nil {
+		return nil, err
+	} else if workout.UserID != fwt.UserIDFromContext(ctx) {
+		return nil, fwt.Errorf(fwt.ENOTAUTHORIZED, "You are not allowed to modify this workout.")
+	}
+
+	for _, exName := range exercises {
+		exercise, err := findExerciseByName(ctx, tx, exName)
+		if err != nil {
+			return workout, err
+		}
+
+		if !implContains2(workout.Exercises, exercise) {
+			err = addExerciseToWorkout(ctx, tx, workout, exercise)
+			if err != nil {
+				return workout, nil
+			}
+
+			workout.Exercises = append(workout.Exercises, exercise)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return workout, err
+	}
+
+	return workout, nil
+}
+
 func (s *WorkoutService) DeleteWorkout(ctx context.Context, id uint) error {
 	tx := s.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
@@ -310,6 +344,18 @@ func removeExerciseFromWorkout(ctx context.Context, tx *Tx, workout *fwt.Workout
 	return nil
 }
 
+func addExerciseToWorkout(ctx context.Context, tx *Tx, wokout *fwt.Workout, exercise *fwt.Exercise) error {
+	if err := createWorkoutExercise(ctx, tx, &fwt.WorkoutExercise{
+		WorkoutID:  wokout.ID,
+		ExerciseID: exercise.ID,
+		Order:      1, // Hard-code for now ...
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func deleteWorkout(ctx context.Context, tx *Tx, id uint) error {
 	workout, err := findWorkoutByID(ctx, tx, id)
 	if err != nil {
@@ -352,4 +398,14 @@ func implContains(ws []*fwt.Workout, w *fwt.Workout) int {
 		}
 	}
 	return -1
+}
+
+func implContains2(exs []*fwt.Exercise, ex *fwt.Exercise) bool {
+	for _, value := range exs {
+		if value.Name == ex.Name {
+			return true
+		}
+	}
+
+	return false
 }

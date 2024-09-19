@@ -46,6 +46,7 @@ type WorkoutService interface {
 	CreateWorkout(context.Context, *Workout) error
 	UpdateWorkout(context.Context, uint, WorkoutUpdate) (*Workout, error)
 	RemoveExercisesFromWorkout(context.Context, uint, []string) (*Workout, error)
+	AddExercisesToWorkout(context.Context, uint, []string) (*Workout, error)
 	DeleteWorkout(context.Context, uint) error
 }
 
