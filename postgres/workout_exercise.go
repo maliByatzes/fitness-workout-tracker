@@ -44,6 +44,16 @@ func (s *WorkoutExerciseService) CreateWorkoutExercise(ctx context.Context, work
 		return err
 	}
 
+	// Find the WEStatus with current we.ID to make sure to create
+	// multiple weStatuses
+
+	if err := createWEStatus(ctx, tx, &fwt.WEStatus{
+		WorkoutExerciseID: workoutExercise.ID,
+		Status:            "pending",
+	}); err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 
