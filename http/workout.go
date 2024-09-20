@@ -77,6 +77,13 @@ func (s *Server) createWorkout() gin.HandlerFunc {
 				return
 			}
 
+			if fwt.ErrorCode(err) == fwt.ECONFLICT {
+				c.JSON(http.StatusConflict, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
 			log.Printf("error in create workout handler: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Internal Server Error",

@@ -29,6 +29,7 @@ func (wes *WEStatus) Validate() error {
 
 type WEStatusService interface {
 	FindWEStatusByID(context.Context, uint) (*WEStatus, error)
+	FindWEStatusByWEID(context.Context, uint) (*WEStatus, error)
 	FindWEStatuses(context.Context, WEStatusFilter) ([]*WEStatus, int, error)
 	CreateWEStatus(context.Context, *WEStatus) error
 	UpdateWEStatus(context.Context, uint, WEStatusUpdate) (*WEStatus, error)

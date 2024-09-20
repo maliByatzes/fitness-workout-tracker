@@ -44,16 +44,6 @@ func (s *WorkoutExerciseService) CreateWorkoutExercise(ctx context.Context, work
 		return err
 	}
 
-	// Find the WEStatus with current we.ID to make sure to create
-	// multiple weStatuses
-
-	if err := createWEStatus(ctx, tx, &fwt.WEStatus{
-		WorkoutExerciseID: workoutExercise.ID,
-		Status:            "pending",
-	}); err != nil {
-		return err
-	}
-
 	return tx.Commit()
 }
 
@@ -105,6 +95,21 @@ func createWorkoutExercise(ctx context.Context, tx *Tx, workoutExercise *fwt.Wor
 
 	err = tx.QueryRowxContext(ctx, query, args...).Scan(&workoutExercise.ID)
 	if err != nil {
+		return err
+	}
+
+	wes, err := findWEStatusByWEID(ctx, tx, workoutExercise.ID)
+	if err != nil && fwt.ErrorCode(err) != fwt.ENOTFOUND && fwt.ErrorMessage(err) != "WEStatus not found." {
+		return err
+	}
+	if wes != nil {
+		return fwt.Errorf(fwt.ECONFLICT, "WEStatus for this workout exercise already exists.")
+	}
+
+	if err := createWEStatus(ctx, tx, &fwt.WEStatus{
+		WorkoutExerciseID: workoutExercise.ID,
+		Status:            "pending",
+	}); err != nil {
 		return err
 	}
 
