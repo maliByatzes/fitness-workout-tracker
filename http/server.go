@@ -24,6 +24,7 @@ type Server struct {
 	WorkoutService         fwt.WorkoutService
 	ExerciseService        fwt.ExerciseService
 	WorkoutExerciseService fwt.WorkoutExerciseService
+	WEStatusService        fwt.WEStatusService
 }
 
 func NewServer(db *postgres.DB, secretKey string) (*Server, error) {
@@ -48,6 +49,7 @@ func NewServer(db *postgres.DB, secretKey string) (*Server, error) {
 	s.WorkoutService = postgres.NewWorkoutService(db)
 	s.ExerciseService = postgres.NewExerciseService(db)
 	s.WorkoutExerciseService = postgres.NewWorkoutExerciseService(db)
+	s.WEStatusService = postgres.NewWEStatusService(db)
 	s.Server.Handler = s.Router
 
 	return &s, nil

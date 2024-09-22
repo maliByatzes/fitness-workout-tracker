@@ -60,7 +60,17 @@ func (s *WEStatusService) CreateWEStatus(ctx context.Context, we *fwt.WEStatus) 
 }
 
 func (s *WEStatusService) UpdateWEStatus(ctx context.Context, id uint, upd fwt.WEStatusUpdate) (*fwt.WEStatus, error) {
-	return nil, nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	we, err := updateWEStatus(ctx, tx, id, upd)
+	if err != nil {
+		return nil, err
+	} else if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return we, nil
 }
 
 func (s *WEStatusService) DeleteWEStatus(ctx context.Context, id uint) error {
@@ -180,6 +190,48 @@ func findWEStatusByWEID(ctx context.Context, tx *Tx, id uint) (*fwt.WEStatus, er
 	}
 
 	return a[0], nil
+}
+
+func updateWEStatus(ctx context.Context, tx *Tx, id uint, upd fwt.WEStatusUpdate) (*fwt.WEStatus, error) {
+	we, err := findWEStatusByID(ctx, tx, id)
+	if err != nil {
+		return we, err
+	}
+
+	if v := upd.Status; v != nil {
+		we.Status = *v
+	}
+	if v := upd.Comments; v != nil {
+		we.Comments = *v
+	}
+	if v := upd.CompletedAt; v != nil {
+		we.CompletedAt = *v
+	}
+
+	we.UpdatedAt = tx.now
+
+	if err := we.Validate(); err != nil {
+		return we, err
+	}
+
+	args := []interface{}{
+		we.Status,
+		we.Comments,
+		we.CompletedAt,
+		we.UpdatedAt,
+		we.ID,
+	}
+	query := `
+	UPDATE workout_exercise_status SET status = $1, comments = $2, completed_at = $3, updated_at = $4
+	WHERE id = $5
+	`
+
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return we, err
+	}
+
+	return we, nil
 }
 
 func deleteWEStatus(ctx context.Context, tx *Tx, id uint) error {

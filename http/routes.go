@@ -27,6 +27,7 @@ func (s *Server) routes() {
 			apiRouter.PATCH("/workout/:id", s.updateWorkout())
 			apiRouter.PATCH("/workout/exercises/remove/:id", s.removeExercisesFromWorkout())
 			apiRouter.PATCH("/workout/exercises/add/:id", s.addExercisesToWorkout())
+			apiRouter.PATCH("/workout/status/:wid/:weid", s.updateWorkoutExerciseStatus())
 			apiRouter.DELETE("/workout/:id", s.deleteWorkout())
 		}
 	}

@@ -351,6 +351,145 @@ func (s *Server) addExercisesToWorkout() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) updateWorkoutExerciseStatus() gin.HandlerFunc {
+	var req struct {
+		WEStatus struct {
+			Status      string    `json:"status"`
+			Comments    string    `json:"comments"`
+			CompletedAt time.Time `json:"completed_at"`
+		} `json:"westatus"`
+	}
+
+	return func(c *gin.Context) {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		workoutIDstr := c.Param("wid")
+		workoutID, err := strconv.ParseUint(workoutIDstr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid workout id param",
+			})
+			return
+		}
+
+		user := fwt.UserFromContext(c.Request.Context())
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User not found",
+			})
+			return
+		}
+
+		_, err = s.WorkoutService.FindWorkoutByIDUserID(c.Request.Context(), uint(workoutID), user.ID)
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.EINVALID {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			log.Printf("error in update workout exercise status: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		weIDstr := c.Param("weid")
+		weID, err := strconv.ParseUint(weIDstr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid workout exercise id param",
+			})
+			return
+		}
+
+		we, err := s.WorkoutExerciseService.FindWorkoutExerciseByID(c.Request.Context(), uint(weID))
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.EINVALID {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			log.Printf("error in update workout exercise status: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		wes, err := s.WEStatusService.FindWEStatusByWEID(c.Request.Context(), we.ID)
+		if err != nil {
+			if fwt.ErrorCode(err) == fwt.EINVALID {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			if fwt.ErrorCode(err) == fwt.ENOTFOUND {
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": fwt.ErrorMessage(err),
+				})
+				return
+			}
+
+			log.Printf("error in update workout exercise status: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		upd := fwt.WEStatusUpdate{}
+		if req.WEStatus.Status != "" {
+			upd.Status = &req.WEStatus.Status
+		}
+		if req.WEStatus.Comments != "" {
+			upd.Comments = &req.WEStatus.Comments
+		}
+		if !req.WEStatus.CompletedAt.IsZero() {
+			upd.CompletedAt = &req.WEStatus.CompletedAt
+		}
+
+		updwes, err := s.WEStatusService.UpdateWEStatus(c.Request.Context(), wes.ID, upd)
+		if err != nil {
+			log.Printf("error in update workout exercise status: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Internal Server Error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "workout exercise status updated successfully",
+			"wes":     updwes,
+		})
+	}
+}
+
 func (s *Server) deleteWorkout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		workoutIDstr := c.Param("id")
