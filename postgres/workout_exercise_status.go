@@ -64,7 +64,14 @@ func (s *WEStatusService) UpdateWEStatus(ctx context.Context, id uint, upd fwt.W
 }
 
 func (s *WEStatusService) DeleteWEStatus(ctx context.Context, id uint) error {
-	return nil
+	tx := s.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+
+	if err := deleteWEStatus(ctx, tx, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func createWEStatus(ctx context.Context, tx *Tx, we *fwt.WEStatus) error {
@@ -173,4 +180,21 @@ func findWEStatusByWEID(ctx context.Context, tx *Tx, id uint) (*fwt.WEStatus, er
 	}
 
 	return a[0], nil
+}
+
+func deleteWEStatus(ctx context.Context, tx *Tx, id uint) error {
+	_, err := findWEStatusByID(ctx, tx, id)
+	if err != nil {
+		return err
+	}
+
+	query := `
+	DELETE FROM workout_exercise_status WHERE id = $1
+	`
+
+	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -183,7 +183,17 @@ func findWorkoutExerciseByID(ctx context.Context, tx *Tx, id uint) (*fwt.Workout
 }
 
 func deleteWorkoutExercise(ctx context.Context, tx *Tx, id uint) error {
-	if _, err := findWorkoutExerciseByID(ctx, tx, id); err != nil {
+	workoutExercise, err := findWorkoutExerciseByID(ctx, tx, id)
+	if err != nil {
+		return err
+	}
+
+	we, err := findWEStatusByWEID(ctx, tx, workoutExercise.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := deleteWEStatus(ctx, tx, we.ID); err != nil {
 		return err
 	}
 
